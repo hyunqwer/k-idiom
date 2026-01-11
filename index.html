@@ -461,6 +461,21 @@
         renderMap();
     }
 
+    function handleGameOver() {
+        if(bossInterval) clearInterval(bossInterval); 
+        
+        alert("하트가 모두 소진되었어요! 💔\n하트를 충전하고 처음부터 다시 시작합니다! 🔥");
+        
+        // Recharge
+        gameData.hearts = 5;
+        updateTopBar();
+        saveGame();
+
+        // Reset to first block
+        currentBlockIndex = 0;
+        renderCurrentBlock();
+    }
+
     function renderCurrentBlock() {
         const block = currentLesson.blocks[currentBlockIndex];
         const container = document.getElementById('blockContainer');
@@ -907,8 +922,8 @@
             setTimeout(() => view.classList.remove('animate-shake', 'bg-red-50'), 400);
 
             if(gameData.hearts <= 0) {
-                alert("탐험 실패! 하트가 부족해요.");
-                exitGame();
+                handleGameOver();
+                return;
             } else {
                 currentQIdx++;
                 loadQ();
@@ -979,7 +994,10 @@
             Sound.play('wrong'); 
             gameData.hearts--;
             updateTopBar();
-            if(gameData.hearts <= 0) { alert("하트 부족! 탐험 종료."); exitGame(); return; }
+            if(gameData.hearts <= 0) { 
+                handleGameOver();
+                return; 
+            }
 
             fbSec.className = "mb-4 p-4 rounded-xl flex items-start space-x-3 animate-shake bg-red-100 text-red-800 border border-red-200";
             fbIcon.innerText = "❌";
