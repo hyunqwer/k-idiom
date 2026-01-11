@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>말랑말랑 관용어 탐험대</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #f0f9ff;
+            user-select: none;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-hand { font-family: 'Gamja Flower', cursive; }
+        .font-pen { font-family: 'Nanum Pen Script', cursive; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Animations */
+        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-in { animation: slideIn 0.4s ease-out forwards; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .animate-shake { animation: shake 0.2s ease-in-out 3; }
+
+        @keyframes comboPop { 0% { transform: scale(0.5) rotate(-10deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        .combo-effect { animation: comboPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Stage Button */
+        .stage-btn {
+            width: 70px; height: 70px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            position: relative; z-index: 10;
+        }
+        .stage-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        .stage-btn.locked { background-color: #e5e7eb; color: #9ca3af; box-shadow: 0 4px 0 #d1d5db; }
+        .stage-btn.completed { background-color: #fbbf24; color: white; box-shadow: 0 6px 0 #d97706; }
+        .stage-btn.current { background-color: #58cc02; color: white; box-shadow: 0 6px 0 #46a302; }
+        /* Time Attack Special Style */
+        .stage-btn.checkpoint { border: 4px solid #fff; }
+        .stage-btn.checkpoint.current { background-color: #ef4444; box-shadow: 0 6px 0 #b91c1c; }
+        .stage-btn.checkpoint.completed { background-color: #f59e0b; box-shadow: 0 6px 0 #b45309; }
+        
+        /* Token for Sentence Builder */
+        .word-token {
+            background: white; border: 2px solid #e5e7eb; border-radius: 12px;
+            padding: 8px 16px; font-size: 18px; color: #374151;
+            box-shadow: 0 3px 0 #e5e7eb; margin: 4px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .word-token:active { transform: translateY(2px); box-shadow: 0 1px 0 #e5e7eb; }
+        .word-token.selected { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; box-shadow: 0 3px 0 #93c5fd; }
+
+        /* Match Game Items */
+        .match-item {
+            background: white; border: 2px solid #e5e7eb; border-radius: 16px;
+            padding: 16px; min-height: 80px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+        }
+        .match-item.selected { border-color: #3b82f6; background-color: #eff6ff; }
+        .match-item.matched { border-color: #22c55e; background-color: #dcfce7; color: #15803d; pointer-events: none; }
+
+        /* INTRO & GATE STYLES */
+        #introView { position: absolute; inset: 0; z-index: 100; overflow: hidden; display: flex; }
+        .gate-panel {
+            flex: 1; height: 100%; background-color: #dbeafe; /* blue-100 */
+            position: relative; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 20; border-right: 1px solid #bfdbfe;
+        }
+        .gate-panel.right { border-left: 1px solid #bfdbfe; border-right: none; }
+        
+        /* When opening */
+        #introView.open .gate-panel:first-child { transform: translateX(-100%); }
+        /* 수정: :last-child 대신 .gate-panel.right로 대상을 명확히 지정 */
+        #introView.open .gate-panel.right { transform: translateX(100%); }
+        
+        .intro-content {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 30; text-align: center; width: 100%; transition: opacity 0.5s ease-out;
+        }
+        #introView.open .intro-content { opacity: 0; pointer-events: none; }
+
+        .cloud-deco { position: absolute; font-size: 4rem; opacity: 0.6; animation: float 4s ease-in-out infinite; }
+        .title-word { display: inline-block; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
+    </style>
+</head>
+<body class="bg-blue-50 h-screen flex justify-center overflow-hidden">
+
+    <div class="w-full max-w-md h-full bg-white shadow-2xl relative flex flex-col">
+        
+        <!-- INTRO VIEW (Added) -->
+        <div id="introView">
+            <!-- Left Gate -->
+            <div class="gate-panel">
+                <div class="cloud-deco" style="top: 15%; left: 15%; animation-delay: 0s;">☁️</div>
+                <div class="cloud-deco" style="bottom: 25%; right: 20%; animation-delay: 1s; font-size: 3rem;">🎈</div>
+                <div class="cloud-deco" style="bottom: 10%; left: 10%; animation-delay: 2s; font-size: 5rem;">🌳</div>
+            </div>
+            <!-- Right Gate -->
+            <div class="gate-panel right">
+                <div class="cloud-deco" style="top: 20%; right: 10%; animation-delay: 0.5s;">☁️</div>
+                <div class="cloud-deco" style="top: 40%; left: 10%; animation-delay: 1.5s; font-size: 2.5rem;">✨</div>
+                <div class="cloud-deco" style="bottom: 15%; right: 15%; animation-delay: 2.5s; font-size: 4rem;">🌷</div>
+            </div>
+            <!-- Center Content -->
+            <div class="intro-content">
+                <h1 class="flex flex-col items-center mb-10">
+                    <span class="text-6xl font-black text-blue-500 drop-shadow-md mb-3 title-word font-hand" style="animation-delay: 0.1s">말랑말랑</span>
+                    <span class="text-5xl font-bold text-gray-700 drop-shadow-sm title-word" style="animation-delay: 0.3s">관용어 탐험대</span>
+                </h1>
+                <div class="title-word" style="animation-delay: 0.6s">
+                    <button onclick="startExploration()" class="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d] active:translate-y-2 active:shadow-none transition-all animate-bounce">
+                        탐험 시작! 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="h-16 bg-white border-b-2 border-gray-100 flex items-center justify-between px-4 z-20 shrink-0">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">❤️</span>
+                <span id="heartsDisplay" class="text-xl font-bold text-red-500">5</span>
+            </div>
+            <h1 class="text-xl font-bold text-gray-700">말랑말랑 관용어</h1>
+            <div class="flex items-center space-x-2">
+                <span class="text-xl font-bold text-yellow-500" id="xpDisplay">0</span>
+                <span class="text-sm font-bold text-gray-400">XP</span>
+            </div>
+        </header>
+
+        <!-- Map View -->
+        <main id="mapView" class="flex-1 overflow-y-auto no-scrollbar relative bg-[#dcfce7] p-6 pb-24">
+            <div class="absolute top-10 left-10 text-4xl opacity-20 animate-float">☁️</div>
+            <div class="absolute top-40 right-10 text-5xl opacity-20">🌳</div>
+            
+            <div id="levelsContainer" class="flex flex-col items-center space-y-8 pt-6 pb-20">
+                <!-- Dynamic Content -->
+            </div>
+        </main>
+
+        <!-- Game View -->
+        <div id="gameView" class="hidden absolute inset-0 bg-white z-50 flex flex-col">
+            <!-- Game Header -->
+            <div class="h-16 flex items-center justify-between px-4 shrink-0 bg-white border-b-2 border-gray-100">
+                <button onclick="exitGame()" class="text-gray-400 text-2xl hover:text-gray-600">✕</button>
+                <div class="flex-1 mx-4">
+                    <!-- Timer / Progress Bar -->
+                    <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden relative">
+                        <div id="quizProgress" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+                        <div id="timerBar" class="hidden h-full bg-red-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span id="headerRightIcon" class="text-red-500 text-xl mr-1">❤️</span>
+                    <span id="gameHearts" class="font-bold text-gray-700">5</span>
+                </div>
+            </div>
+
+            <!-- Combo Overlay for Time Attack -->
+            <div id="comboOverlay" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                <div class="text-4xl font-black text-yellow-500 drop-shadow-lg combo-effect" id="comboText">Combo x2!</div>
+                <div class="text-xl font-bold text-green-500 text-center drop-shadow-md mt-1" id="timeBonusText">+3초</div>
+            </div>
+
+            <!-- Block Content Area -->
+            <div id="blockContainer" class="flex-1 overflow-y-auto p-6 flex flex-col items-center max-w-full relative">
+                <!-- Dynamic Block -->
+            </div>
+
+            <!-- Bottom Action Area -->
+            <div id="actionArea" class="p-4 border-t-2 border-gray-100 bg-white shrink-0">
+                <div id="feedbackSection" class="hidden mb-4 p-4 rounded-xl flex items-start space-x-3 animate-slide-in">
+                    <div id="feedbackIcon" class="text-3xl"></div>
+                    <div>
+                        <h3 id="feedbackTitle" class="text-lg font-bold"></h3>
+                        <p id="feedbackText" class="text-sm text-gray-700 mt-1"></p>
+                    </div>
+                </div>
+                
+                <button id="mainActionBtn" class="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 transition-all bg-gray-300 pointer-events-none">
+                    확인
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Complete Modal -->
+        <div id="completeModal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl p-8 text-center w-full max-w-sm animate-pop border-4 border-yellow-400">
+                <div id="modalIcon" class="text-7xl mb-4 animate-bounce">🎉</div>
+                <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-2">레슨 완료!</h2>
+                <p id="modalDesc" class="text-gray-500 mb-8 text-lg">관용어 실력이 쑥쑥 자랐어요!</p>
+                <div class="flex justify-center mb-8">
+                    <div class="bg-yellow-50 px-6 py-3 rounded-2xl border-2 border-yellow-200">
+                        <div class="text-sm text-yellow-600 font-bold uppercase tracking-wide">XP 획득</div>
+                        <div id="modalXP" class="text-3xl font-bold text-yellow-500">+20</div>
+                    </div>
+                </div>
+                <button onclick="closeCompleteModal()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-xl shadow-[0_4px_0_#15803d]">
+                    계속하기
+                </button>
+            </div>
+        </div>
+
+        <!-- Fail Modal -->
+        <div id="failModal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl p-8 text-center w-full max-w-sm animate-pop border-4 border-red-400">
+                <div class="text-7xl mb-4">⏰</div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">시간 초과!</h2>
+                <p class="text-gray-500 mb-8 text-lg">조금만 더 빠르면 할 수 있어요!</p>
+                <button onclick="retryTimeAttack()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl font-bold text-xl shadow-[0_4px_0_#991b1b]">
+                    다시 도전하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /**
+     * Data & Logic
+     */
+    
+    // --- Data Definitions ---
+    // 복습 데이터 (타임어택용)
+    const REVIEW_DATA = {
+        "W01": [
+            {q:"귀가 얇다", m:"남의 말을 쉽게 믿다"}, {q:"귀를 기울이다", m:"잘 듣다"},
+            {q:"귀가 솔깃하다", m:"흥미가 생기다"}, {q:"눈에 띄다", m:"잘 보이다"}
+        ],
+        "W02": [
+            {q:"입이 무겁다", m:"비밀을 잘 지키다"}, {q:"입이 짧다", m:"음식을 조금 먹다"},
+            {q:"입을 열다", m:"말하기 시작하다"}, {q:"입을 다물다", m:"말하지 않다"}
+        ]
+    };
+
+    // Week 1: Eyes & Ears (Full Activities)
+    const week1Json = {
+      "week_id": "W01",
+      "title": "Level 1: 눈·귀 관용어",
+      "lessons": [
+        {
+          "lesson_id": "W01-L01",
+          "title": "귀가 얇다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "민지는 친구가 추천한 물건을 보자마자 바로 사고 싶어졌어요.", "media": "🛒" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "이런 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 얇다" }, { "id": "c2", "text": "눈이 높다" }, { "id": "c3", "text": "손이 빠르다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 남의 말에 쉽게 흔들리면 ‘귀가 얇다’예요.", "incorrect": "‘귀가 얇다’는 남의 말을 쉽게 믿는다는 뜻이에요." } },
+            { "type": "true_false", "prompt": { "text": "‘귀가 얇다’는 진짜 귀 두께가 얇다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! 성격을 말하는 거예요.", "incorrect": "관용어는 겉말 그대로가 아니에요." } },
+            { "type": "cloze", "prompt": { "text": "민지는 (   )라서 친구 말에 쉽게 흔들려요." }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 얇다" }, { "id": "c2", "text": "귀를 기울이다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "남의 말을 쉽게 믿는 성격이에요." } },
+            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민지는", "귀가", "얇아서", "추천을", "바로", "믿었어요."], "correct_sequence": ["민지는", "귀가", "얇아서", "추천을", "바로", "믿었어요."] }, "feedback": { "correct": "완벽해요!", "incorrect": "순서를 다시 생각해봐요." } },
+            { "type": "writing", "prompt": { "text": "‘귀가 얇다’를 사용해 문장을 써 보세요." }, "interaction": { "placeholder": "예) 저는 귀가 얇아서 팔랑귀라는 소리를 들어요." }, "grading": { "must_include": ["귀가 얇", "귀가얇"] }, "feedback": { "correct": "멋진 문장이에요!", "incorrect": "‘귀가 얇다’라는 말을 꼭 넣어주세요." } }
+          ]
+        },
+        {
+          "lesson_id": "W01-L02",
+          "title": "귀를 기울이다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "선생님이 중요한 안내를 하고 있어요. 민수는 집중해서 듣고 있어요.", "media": "👂" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "집중해서 잘 들을 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀를 기울이다" }, { "id": "c2", "text": "귀가 솔깃하다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "정답! ‘잘 듣다’는 뜻이에요.", "incorrect": "집중해서 듣는 상황이에요." } },
+            { "type": "true_false", "prompt": { "text": "‘귀를 기울이다’는 귀를 실제로 기울이는 행동만 뜻한다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "맞아요! 마음을 모아 듣는다는 뜻도 있어요.", "incorrect": "비유적인 표현이랍니다." } },
+            { "type": "cloze", "prompt": { "text": "중요한 설명이니 (   )고 잘 들어야 해요." }, "interaction": { "choices": [{ "id": "c1", "text": "귀를 기울이" }, { "id": "c2", "text": "귀가 얇" }, { "id": "c3", "text": "눈에 띄" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "좋아요!", "incorrect": "집중해서 듣는다는 뜻을 찾아봐요." } },
+            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["저는", "선생님", "말에", "귀를", "기울였어요."], "correct_sequence": ["저는", "선생님", "말에", "귀를", "기울였어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } }
+          ]
+        },
+        {
+          "lesson_id": "W01-L03",
+          "title": "귀가 솔깃하다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "친구가 ‘놀이공원 할인해!’라고 말하자 민지의 표정이 달라졌어요.", "media": "🎡" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "흥미가 생길 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 솔깃하다" }, { "id": "c2", "text": "귀가 얇다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 관심이 생긴다는 뜻이에요.", "incorrect": "흥미가 생기는 상황이에요." } },
+            { "type": "true_false", "prompt": { "text": "‘귀가 솔깃하다’는 귀가 반짝거린다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "맞아요! 마음이 끌린다는 뜻이에요.", "incorrect": "비유적인 표현이에요." } },
+             { "type": "writing", "prompt": { "text": "‘귀가 솔깃하다’를 사용해 문장을 써 보세요." }, "interaction": { "placeholder": "예) 공짜라는 말에 귀가 솔깃했어요." }, "grading": { "must_include": ["귀가 솔깃", "귀가솔깃"] }, "feedback": { "correct": "잘 썼어요!", "incorrect": "‘귀가 솔깃하다’를 넣어보세요." } }
+          ]
+        },
+        {
+          "lesson_id": "W01-L04",
+          "title": "눈에 띄다",
+          "blocks": [
+             { "type": "match", "prompt": { "text": "뜻이 같은 것끼리 연결하세요." }, "interaction": { "pairs": [{ "left": "눈에 띄다", "right": "잘 보이다" }, { "left": "귀가 솔깃하다", "right": "흥미가 생기다" }] }, "feedback": { "correct": "잘 연결했어요!", "incorrect": "다시 한 번 생각해봐요." } },
+             { "type": "mcq", "prompt": { "text": "한눈에 잘 보일 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "눈에 띄다" }, { "id": "c2", "text": "귀를 기울이다" }, { "id": "c3", "text": "귀가 얇다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "정답!", "incorrect": "빨간 모자가 한눈에 보였어요." } },
+             { "type": "cloze", "prompt": { "text": "노란 우산이 멀리서도 (   )." }, "interaction": { "choices": [{ "id": "c1", "text": "눈에 띄었어요" }, { "id": "c2", "text": "귀를 기울였어요" }, { "id": "c3", "text": "귀가 얇았어요" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 맞아요!", "incorrect": "잘 보인다는 뜻이 필요해요." } }
+          ]
+        }
+      ]
+    };
+
+    // Week 2: Mouth (Full Activities)
+    const week2Json = {
+      "week_id": "W02",
+      "title": "Level 2: 입 관용어",
+      "lessons": [
+        {
+          "lesson_id": "W02-L01",
+          "title": "입이 무겁다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "친구가 비밀 이야기를 했는데 민수는 다른 친구에게 말하지 않았어요.", "media": "🤐" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "비밀을 잘 지키는 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "입이 무겁다" }, { "id": "c2", "text": "입이 짧다" }, { "id": "c3", "text": "입을 열다" }, { "id": "c4", "text": "입을 다물다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 비밀을 잘 지키면 ‘입이 무겁다’예요.", "incorrect": "‘입이 무겁다’는 비밀을 잘 지킨다는 뜻이에요." } },
+            { "type": "true_false", "prompt": { "text": "‘입이 무겁다’는 입이 진짜 무겁다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘비밀을 잘 지킨다’라는 뜻이에요.", "incorrect": "틀렸어요. 관용어는 겉말 그대로가 아닐 수 있어요." } },
+            { "type": "cloze", "prompt": { "text": "민수는 (   )라서 친구의 비밀을 지켜 줬어요." }, "interaction": { "choices": [{ "id": "c1", "text": "입이 무겁다" }, { "id": "c2", "text": "입이 짧다" }, { "id": "c3", "text": "입을 열다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "비밀을 잘 지킨다는 뜻이 필요해요." } },
+            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민수는", "입이", "무거워서", "비밀을", "지켰어요."], "correct_sequence": ["민수는", "입이", "무거워서", "비밀을", "지켰어요."] }, "feedback": { "correct": "완벽해요!", "incorrect": "순서를 다시 확인해보세요." } },
+            { "type": "produce", "variants": { "HIGH": { "type": "writing", "prompt": { "text": "‘입이 무겁다’를 사용해 문장을 만들어 보세요." }, "interaction": { "input": { "kind": "text", "min_chars": 8, "placeholder": "예) 저는 입이 무거워서 친구의 비밀을 지켜요." } }, "grading": { "must_include": ["입이 무겁", "입이무겁"] }, "feedback": { "correct": "좋아요!", "incorrect": "‘입이 무겁다’를 넣어보세요." } } } }
+          ]
+        },
+        {
+          "lesson_id": "W02-L02",
+          "title": "입이 짧다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "급식이 나왔지만 민지는 몇 숟가락만 먹고 그만 먹었어요.", "media": "🍚" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "음식을 조금 먹는 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "입이 짧다" }, { "id": "c2", "text": "입이 무겁다" }, { "id": "c3", "text": "입을 열다" }, { "id": "c4", "text": "입을 다물다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! ‘입이 짧다’는 음식을 조금 먹는 뜻이에요.", "incorrect": "몇 숟가락만 먹었어요." } },
+            { "type": "true_false", "prompt": { "text": "‘입이 짧다’는 입의 길이가 짧다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘음식을 조금 먹다’예요.", "incorrect": "관용어는 비유예요." } },
+            { "type": "cloze", "prompt": { "text": "저는 (   )라서 조금만 먹어요." }, "interaction": { "choices": [{ "id": "c1", "text": "입이 짧다" }, { "id": "c2", "text": "입이 무겁다" }, { "id": "c3", "text": "입을 열다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "음식을 조금 먹는다는 뜻이에요." } },
+            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["저는", "입이", "짧아서", "조금만", "먹어요."], "correct_sequence": ["저는", "입이", "짧아서", "조금만", "먹어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } },
+            { "type": "produce", "variants": { "HIGH": { "type": "writing", "prompt": { "text": "‘입이 짧다’를 사용해 문장을 만들어 보세요." }, "interaction": { "input": { "kind": "text", "min_chars": 8, "placeholder": "예) 저는 입이 짧아서 금방 배불러요." } }, "grading": { "must_include": ["입이 짧", "입이짧"] }, "feedback": { "correct": "좋아요!", "incorrect": "‘입이 짧다’를 넣어보세요." } } } }
+          ]
+        },
+        {
+          "lesson_id": "W02-L03",
+          "title": "입을 열다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "발표 시간인데 망설이던 민지가 드디어 말을 시작했어요.", "media": "🗣️" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "말하기를 시작할 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "입을 열다" }, { "id": "c2", "text": "입을 다물다" }, { "id": "c3", "text": "입이 무겁다" }, { "id": "c4", "text": "입이 짧다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! ‘입을 열다’는 말하기를 시작한다는 뜻이에요.", "incorrect": "드디어 말을 시작했어요." } },
+            { "type": "true_false", "prompt": { "text": "‘입을 열다’는 입을 실제로 벌린다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘말하기 시작하다’라는 뜻이에요.", "incorrect": "말하기 시작할 때 쓰는 관용어예요." } },
+            { "type": "cloze", "prompt": { "text": "민지는 용기를 내서 드디어 (   )." }, "interaction": { "choices": [{ "id": "c1", "text": "입을 열었어요" }, { "id": "c2", "text": "입을 다물었어요" }, { "id": "c3", "text": "입이 짧았어요" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "좋아요!", "incorrect": "말하기 시작했다는 뜻이 필요해요." } },
+            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민지는", "용기를", "내서", "입을", "열었어요."], "correct_sequence": ["민지는", "용기를", "내서", "입을", "열었어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } },
+            { "type": "produce", "variants": { "HIGH": { "type": "writing", "prompt": { "text": "‘입을 열다’를 사용해 문장을 만들어 보세요." }, "interaction": { "input": { "kind": "text", "min_chars": 8, "placeholder": "예) 저는 고민하다가 드디어 입을 열었어요." } }, "grading": { "must_include": ["입을 열", "입을열"] }, "feedback": { "correct": "좋아요!", "incorrect": "‘입을 열다’를 넣어보세요." } } } }
+          ]
+        },
+        {
+          "lesson_id": "W02-L04",
+          "title": "입을 다물다",
+          "blocks": [
+            { "type": "context_scene", "prompt": { "text": "친구가 비밀을 지켜 달라고 해서 민지는 아무 말도 하지 않았어요.", "media": "🤐" }, "interaction": { "mode": "tap_to_continue" } },
+            { "type": "mcq", "prompt": { "text": "말을 하지 않을 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "입을 다물다" }, { "id": "c2", "text": "입을 열다" }, { "id": "c3", "text": "입이 짧다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 침묵을 지킨다는 뜻이에요.", "incorrect": "말을 안 하는 상황이에요." } },
+            { "type": "match", "prompt": { "text": "관용어와 뜻을 연결하세요." }, "interaction": { "pairs": [{ "left": "입을 다물다", "right": "말하지 않다" }, { "left": "입을 열다", "right": "말하기 시작하다" }, { "left": "입이 무겁다", "right": "비밀을 잘 지키다" }] }, "feedback": { "correct": "좋아요!", "incorrect": "다시 연결해 볼까요?" } },
+            { "type": "produce", "variants": { "HIGH": { "type": "writing", "prompt": { "text": "‘입을 다물다’를 사용해 문장을 만들어 보세요." }, "interaction": { "input": { "kind": "text", "min_chars": 8, "placeholder": "예) 비밀을 지키기 위해 입을 꾹 다물었어요." } }, "grading": { "must_include": ["입을 다물", "입을다물"] }, "feedback": { "correct": "훌륭해요!", "incorrect": "‘입을 다물다’를 넣어보세요." } } } }
+          ]
+        }
+      ]
+    };
+
+    const rawIdioms = [
+        {q:"손이 빠르다", m:"일을 빨리하다", ex:"언니는 손이 빨라서 숙제를 금방 끝내요."},
+        {q:"발이 넓다", m:"아는 사람이 많다", ex:"형은 발이 넓어서 아는 사람이 많아요."},
+        {q:"발 벗고 나서다", m:"적극적으로 돕다", ex:"친구를 위해 발 벗고 나섰어요."},
+        {q:"손을 내밀다", m:"도움을 청하다", ex:"어려울 때 손을 내밀었어요."},
+        {q:"간이 콩알만 해지다", m:"매우 무섭다", ex:"발표 차례가 되자 간이 콩알만 해졌어요."},
+        {q:"가슴이 철렁하다", m:"깜짝 놀라다", ex:"이름이 불려서 가슴이 철렁했어요."},
+        {q:"입이 딱 벌어지다", m:"매우 놀라다", ex:"마술을 보고 입이 딱 벌어졌어요."},
+        {q:"손에 땀을 쥐다", m:"매우 긴장되다", ex:"경기는 손에 땀을 쥐게 했어요."},
+        {q:"머리를 맞대다", m:"함께 생각하다", ex:"다 같이 머리를 맞대고 고민했어요."},
+        {q:"눈이 높다", m:"기준이 까다롭다", ex:"지수는 눈이 높아서 물건을 잘 골라요."},
+        {q:"눈코 뜰 새 없다", m:"매우 바쁘다", ex:"요즘 눈코 뜰 새 없이 바빠요."},
+        {q:"어깨가 무겁다", m:"책임이 크다", ex:"대표가 되어 어깨가 무거워요."}
+    ];
+
+    const LEVEL_THEMES = [
+        { title: "Level 1: 눈·귀 탐험", color: "bg-green-500", shadow: "shadow-green-700" },
+        { title: "Level 2: 입의 비밀", color: "bg-orange-500", shadow: "shadow-orange-700" },
+        { title: "Level 3: 손·발 대장", color: "bg-blue-500", shadow: "shadow-blue-700" },
+        { title: "Level 4: 두근두근 마음", color: "bg-pink-500", shadow: "shadow-pink-700" },
+        { title: "Level 5: 척척박사 사회", color: "bg-purple-500", shadow: "shadow-purple-700" }
+    ];
+
+    let gameData = { xp: 0, hearts: 5, maxHearts: 5, completedLessons: [], levels: [] };
+    
+    // Time Attack State
+    let isTimeAttackMode = false;
+    let taTimeLeft = 60;
+    let taCombo = 0;
+    let taTimerInterval = null;
+    let taQuestions = [];
+    let taCurrentQIndex = 0;
+    let taTotalQ = 10;
+
+    let currentLesson = null;
+    let currentBlockIndex = 0;
+
+    // INTRO LOGIC
+    function startExploration() {
+        const intro = document.getElementById('introView');
+        intro.classList.add('open');
+        
+        // Remove after animation to allow interaction with map underneath
+        setTimeout(() => {
+            intro.style.display = 'none';
+        }, 1200);
+    }
+
+    // --- INIT ---
+    function initGame() {
+        const saved = localStorage.getItem('idiomGameSave_v5');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            gameData.xp = parsed.xp || 0;
+            gameData.hearts = parsed.hearts || 5;
+            gameData.completedLessons = parsed.completedLessons || [];
+        }
+
+        const level1 = { id: "W01", title: week1Json.title, lessons: [...week1Json.lessons] };
+        const level2 = { id: "W02", title: week2Json.title, lessons: [...week2Json.lessons] };
+        const otherLevels = [];
+        
+        for(let i=0; i<3; i++) {
+            const levelIdx = i + 3;
+            const startIdx = i * 4;
+            const idioms = rawIdioms.slice(startIdx, startIdx + 4);
+            const lessons = idioms.map((idiom, idx) => ({
+                lesson_id: `W0${levelIdx}-L0${idx+1}`,
+                title: idiom.q,
+                blocks: generateBlocksForIdiom(idiom)
+            }));
+            otherLevels.push({ id: `W0${levelIdx}`, title: LEVEL_THEMES[levelIdx-1].title, lessons: lessons });
+        }
+
+        gameData.levels = [level1, level2, ...otherLevels];
+        
+        // Add Checkpoint (Time Attack) to each level
+        gameData.levels.forEach(lvl => {
+            lvl.lessons.push({
+                lesson_id: `${lvl.id}-Checkpoint`,
+                title: "타임어택",
+                type: 'checkpoint'
+            });
+        });
+
+        updateTopBar();
+        renderMap();
+    }
+
+    // Auto-generate multiple blocks for levels 3-5 (Reverted to full suite)
+    function generateBlocksForIdiom(idiom) {
+        return [
+            // 1. Context Scene
+            {
+                type: "context_scene",
+                prompt: { text: idiom.ex.replace(idiom.q, "______"), media: "🤔" },
+                interaction: { mode: "tap_to_continue" }
+            },
+            // 2. MCQ
+            {
+                type: "mcq",
+                prompt: { text: `'${idiom.q}'의 뜻은?` },
+                interaction: {
+                    choices: [
+                        { id: "c1", text: idiom.m },
+                        { id: "c2", text: "반대되는 뜻" },
+                        { id: "c3", text: "다른 뜻" }
+                    ].sort(()=>Math.random()-0.5),
+                    correct_choice_ids: ["c1"]
+                },
+                feedback: { correct: "정답!", incorrect: `정답: ${idiom.m}` }
+            },
+            // 3. Sentence Builder
+            {
+                type: "sentence_builder",
+                prompt: { text: "문장을 올바르게 배열하세요." },
+                interaction: {
+                    tokens: idiom.ex.split(" ").sort(()=>Math.random()-0.5),
+                    correct_sequence: idiom.ex.split(" ")
+                },
+                feedback: { correct: "완벽해요!", incorrect: "순서를 확인하세요." }
+            }
+        ];
+    }
+
+    function saveGame() {
+        localStorage.setItem('idiomGameSave_v5', JSON.stringify({
+            xp: gameData.xp, hearts: gameData.hearts, completedLessons: gameData.completedLessons
+        }));
+        updateTopBar();
+    }
+    
+    function updateTopBar() {
+        document.getElementById('heartsDisplay').innerText = gameData.hearts;
+        document.getElementById('xpDisplay').innerText = gameData.xp;
+    }
+
+    // --- MAP ---
+    function renderMap() {
+        const container = document.getElementById('levelsContainer');
+        container.innerHTML = '';
+        gameData.levels.forEach((level, lIdx) => {
+            const header = document.createElement('div');
+            header.className = "w-full max-w-xs text-center mb-6 mt-4 relative";
+            header.innerHTML = `<div class="inline-block px-5 py-2 rounded-2xl text-white font-bold text-lg shadow-md ${LEVEL_THEMES[lIdx].color}">${level.title}</div>`;
+            container.appendChild(header);
+
+            level.lessons.forEach((lesson, sIdx) => {
+                const isCompleted = gameData.completedLessons.includes(lesson.lesson_id);
+                let isLocked = true;
+                
+                // Logic to unlock lessons
+                if (lIdx === 0 && sIdx === 0) isLocked = false;
+                else {
+                    if(sIdx > 0) {
+                        const prevId = level.lessons[sIdx-1].lesson_id;
+                        if(gameData.completedLessons.includes(prevId)) isLocked = false;
+                    } else if (lIdx > 0) {
+                        const prevLevel = gameData.levels[lIdx-1];
+                        const lastLessonOfPrev = prevLevel.lessons[prevLevel.lessons.length-1].lesson_id;
+                        if(gameData.completedLessons.includes(lastLessonOfPrev)) isLocked = false;
+                    }
+                }
+
+                let align = 'justify-center';
+                if (lesson.type !== 'checkpoint') {
+                    if (sIdx % 2 !== 0) align = (sIdx % 4 === 1) ? 'justify-start pl-12' : 'justify-end pr-12';
+                }
+
+                const row = document.createElement('div');
+                row.className = `w-full max-w-xs flex ${align} mb-6`;
+                
+                const btn = document.createElement('div');
+                let statusClass = isLocked ? 'locked' : (isCompleted ? 'completed' : 'current');
+                
+                // Styles
+                if (lesson.type === 'checkpoint') {
+                    btn.className = `stage-btn checkpoint cursor-pointer ${statusClass}`;
+                    if(!isLocked) {
+                        btn.classList.add(isCompleted ? 'bg-yellow-500' : 'bg-red-500');
+                    }
+                    btn.innerHTML = '🏆';
+                } else {
+                    btn.className = `stage-btn cursor-pointer ${statusClass}`;
+                    if(!isLocked) {
+                        const colorHex = getTailwindColor(LEVEL_THEMES[lIdx].color);
+                        btn.style.backgroundColor = isCompleted ? '#fbbf24' : colorHex;
+                    }
+                    btn.innerHTML = isCompleted ? '⭐' : (isLocked ? '🔒' : '★');
+                }
+
+                const label = document.createElement('div');
+                label.className = "absolute -bottom-8 w-32 text-center text-sm font-bold text-gray-600 bg-white/80 rounded-md py-1 backdrop-blur-sm pointer-events-none";
+                label.innerText = lesson.title;
+                btn.appendChild(label);
+
+                if(!isLocked) {
+                    btn.onclick = () => startLesson(level, lesson, lIdx);
+                }
+                row.appendChild(btn);
+                container.appendChild(row);
+            });
+        });
+    }
+
+    function getTailwindColor(cls) {
+        if(cls.includes('green')) return '#22c55e';
+        if(cls.includes('blue')) return '#3b82f6';
+        if(cls.includes('pink')) return '#ec4899';
+        if(cls.includes('purple')) return '#a855f7';
+        if(cls.includes('orange')) return '#f97316';
+        return '#58cc02';
+    }
+
+    // --- GAME ENGINE ---
+    function startLesson(level, lesson, levelIndex) {
+        if (lesson.type === 'checkpoint') {
+            initTimeAttack(level, lesson);
+        } else {
+            if(gameData.hearts <= 0) { alert("하트 부족!"); return; }
+            startNormalLesson(level, lesson);
+        }
+    }
+
+    function exitGame() {
+        stopTimer();
+        document.getElementById('gameView').classList.add('hidden');
+        document.getElementById('mapView').classList.remove('hidden');
+        renderMap();
+    }
+
+    // --- NORMAL MODE ---
+    function startNormalLesson(level, lesson) {
+        isTimeAttackMode = false;
+        currentLesson = lesson;
+        currentBlockIndex = 0;
+        
+        // UI Setup
+        document.getElementById('quizProgress').classList.remove('hidden');
+        document.getElementById('quizProgress').style.width = '0%';
+        document.getElementById('timerBar').classList.add('hidden');
+        document.getElementById('headerRightIcon').innerText = '❤️';
+        document.getElementById('gameHearts').innerText = gameData.hearts;
+        
+        document.getElementById('mapView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+
+        renderCurrentBlock();
+    }
+
+    function renderCurrentBlock() {
+        let block = currentLesson.blocks[currentBlockIndex];
+        if (block.type === 'produce') block = block.variants.HIGH || block.variants.MID;
+
+        setupBlockUI(block);
+        const container = document.getElementById('blockContainer');
+        const i = block.interaction;
+
+        // Render Interaction
+        if (block.type === 'context_scene') {
+            enableMainBtn("알겠어요!", () => nextBlock());
+        } else if (block.type === 'mcq') {
+            renderMCQ(container, i.choices, (id) => checkAnswer(id, i.correct_choice_ids, block));
+        } else if (block.type === 'true_false') {
+            renderTF(container, (id) => checkAnswer(id, i.correct_choice_ids, block));
+        } else if (block.type === 'match') {
+            renderMatch(container, i.pairs, (res) => handleMatchResult(res, block));
+        } else if (block.type === 'cloze') {
+            renderMCQ(container, i.choices, (id) => checkAnswer(id, i.correct_choice_ids, block));
+        } else if (block.type === 'sentence_builder') {
+            renderSB(container, i.tokens, (seq) => checkSentence(seq, i.correct_sequence, block));
+        } else if (block.type === 'writing') {
+            renderWriting(container, i.input?.placeholder, (txt) => checkWriting(txt, block));
+        }
+        
+        // Update Progress
+        const p = ((currentBlockIndex) / currentLesson.blocks.length) * 100;
+        document.getElementById('quizProgress').style.width = `${p}%`;
+    }
+
+    // --- TIME ATTACK MODE ---
+    function initTimeAttack(level, lesson) {
+        isTimeAttackMode = true;
+        currentLesson = lesson;
+        taTimeLeft = 60;
+        taCombo = 0;
+        taCurrentQIndex = 0;
+        
+        // Generate Question Pool
+        let pool = REVIEW_DATA[level.id];
+        if (!pool) {
+            // Use Raw Idioms for L3-5, shuffle and pick 10
+            let startIdx = (parseInt(level.id.substring(1)) - 3) * 4;
+            pool = rawIdioms.slice(startIdx, startIdx+4); 
+            // Expand pool with distractors logic if needed, but for now reuse simple
+        }
+        
+        // Generate 10 simple MCQ questions
+        taQuestions = [];
+        for(let i=0; i<taTotalQ; i++) {
+            let item = pool[i % pool.length]; // Cycle through pool
+            taQuestions.push({
+                item: item,
+                choices: [
+                    item.m,
+                    "전혀 다른 뜻입니다", 
+                    "반대되는 뜻입니다" 
+                ].sort(() => Math.random() - 0.5)
+            });
+        }
+
+        // UI Setup
+        document.getElementById('mapView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+        
+        document.getElementById('quizProgress').classList.add('hidden');
+        document.getElementById('timerBar').classList.remove('hidden');
+        document.getElementById('timerBar').style.width = '100%';
+        document.getElementById('headerRightIcon').innerText = '🔥'; // Combo Icon
+        document.getElementById('gameHearts').innerText = '0'; // Combo Count
+
+        startTimer();
+        renderTimeAttackQuestion();
+    }
+
+    function startTimer() {
+        if(taTimerInterval) clearInterval(taTimerInterval);
+        taTimerInterval = setInterval(() => {
+            taTimeLeft--;
+            const width = (taTimeLeft / 60) * 100;
+            const bar = document.getElementById('timerBar');
+            bar.style.width = `${width}%`;
+            
+            if(taTimeLeft <= 10) bar.classList.replace('bg-green-500', 'bg-red-500'); // Panic color
+            else bar.classList.replace('bg-red-500', 'bg-red-500'); // Default Red per requirement? Ah, let's make it Green -> Red
+
+            if (taTimeLeft <= 0) {
+                failTimeAttack();
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if(taTimerInterval) clearInterval(taTimerInterval);
+    }
+
+    function renderTimeAttackQuestion() {
+        const qData = taQuestions[taCurrentQIndex];
+        const container = document.getElementById('blockContainer');
+        const feedbackSec = document.getElementById('feedbackSection');
+        feedbackSec.classList.add('hidden'); // Hide feedback in TA mode for speed
+        
+        document.getElementById('gameHearts').innerText = taCombo; // Show Combo
+
+        container.innerHTML = '';
+        const title = document.createElement('h2');
+        title.className = "text-2xl font-bold text-gray-700 mb-8 text-center";
+        title.innerText = `'${qData.item.q}'의 뜻은?`;
+        container.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-1 gap-3 w-full max-w-sm";
+        
+        qData.choices.forEach(txt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full border-2 border-gray-200 bg-white hover:bg-gray-50 py-4 rounded-xl text-lg font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
+            btn.innerText = txt;
+            btn.onclick = () => checkTimeAttackAnswer(txt === qData.item.m);
+            grid.appendChild(btn);
+        });
+        container.appendChild(grid);
+        
+        // Hide Main Action Button in Time Attack (Rapid Fire)
+        document.getElementById('actionArea').classList.add('hidden');
+    }
+
+    function checkTimeAttackAnswer(isCorrect) {
+        if(isCorrect) {
+            // Bonus Time
+            let bonus = 3;
+            if(taCombo >= 2) bonus += 1; 
+            if(taCombo >= 5) bonus += 2;
+            
+            taTimeLeft = Math.min(60, taTimeLeft + bonus);
+            taCombo++;
+            
+            // Visual Effect
+            showComboEffect(bonus);
+        } else {
+            // Penalty
+            taTimeLeft -= 5;
+            taCombo = 0;
+            shakeScreen();
+        }
+
+        document.getElementById('gameHearts').innerText = taCombo;
+
+        // Next
+        taCurrentQIndex++;
+        if(taCurrentQIndex >= taTotalQ) {
+            winTimeAttack();
+        } else {
+            renderTimeAttackQuestion();
+        }
+    }
+
+    function showComboEffect(bonus) {
+        const overlay = document.getElementById('comboOverlay');
+        const text = document.getElementById('comboText');
+        const sub = document.getElementById('timeBonusText');
+        
+        if(taCombo > 1) {
+            text.innerText = `Combo x${taCombo}!`;
+            sub.innerText = `+${bonus}초`;
+            overlay.classList.remove('hidden');
+            
+            // Re-trigger animation
+            overlay.classList.remove('combo-effect');
+            void overlay.offsetWidth; // reflow
+            overlay.classList.add('combo-effect');
+            
+            setTimeout(() => overlay.classList.add('hidden'), 800);
+        }
+    }
+
+    function shakeScreen() {
+        const view = document.getElementById('gameView');
+        view.classList.add('animate-shake');
+        setTimeout(() => view.classList.remove('animate-shake'), 500);
+    }
+
+    function winTimeAttack() {
+        stopTimer();
+        document.getElementById('actionArea').classList.remove('hidden');
+        finishLesson(true);
+    }
+
+    function failTimeAttack() {
+        stopTimer();
+        document.getElementById('failModal').classList.remove('hidden');
+    }
+
+    function retryTimeAttack() {
+        document.getElementById('failModal').classList.add('hidden');
+        initTimeAttack(currentLesson.levelObj, currentLesson); // Need level ref hack or pass it better
+        // For simplicity, re-call startLesson logic by reloading map logic? 
+        // Just re-init:
+        // We need 'level' object. 
+        // Quick fix: store level in currentLesson when starting
+        startLesson(currentLesson.levelObj, currentLesson); 
+    }
+
+    // --- COMMON HELPERS ---
+    
+    function setupBlockUI(block) {
+        const container = document.getElementById('blockContainer');
+        const actionArea = document.getElementById('actionArea');
+        const mainBtn = document.getElementById('mainActionBtn');
+        const feedbackSec = document.getElementById('feedbackSection');
+
+        container.innerHTML = '';
+        feedbackSec.classList.add('hidden');
+        actionArea.classList.remove('hidden');
+        
+        mainBtn.className = "w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.2)] bg-gray-300 pointer-events-none";
+        mainBtn.innerText = "확인";
+        mainBtn.onclick = null;
+
+        const title = document.createElement('h2');
+        title.className = "text-2xl font-bold text-gray-700 mb-6 text-center whitespace-pre-line";
+        title.innerText = block.prompt.text;
+        container.appendChild(title);
+
+        if(block.prompt.media) {
+            const m = document.createElement('div');
+            m.className = "text-6xl mb-8 animate-bounce";
+            m.innerText = block.prompt.media;
+            container.appendChild(m);
+        }
+    }
+
+    function enableMainBtn(text, cb) {
+        const btn = document.getElementById('mainActionBtn');
+        btn.innerText = text || "확인";
+        btn.className = "w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_#15803d] bg-green-500 hover:bg-green-600 cursor-pointer";
+        btn.onclick = cb;
+        btn.style.pointerEvents = "auto";
+    }
+
+    function renderMCQ(container, choices, cb) {
+        const grid = document.createElement('div'); grid.className = "grid grid-cols-1 gap-3 w-full max-w-sm";
+        choices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn w-full border-2 border-gray-200 bg-white hover:bg-gray-50 py-4 rounded-xl text-lg font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
+            btn.innerText = c.text;
+            btn.onclick = () => {
+                document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('border-blue-500','bg-blue-50','text-blue-600'));
+                btn.classList.add('border-blue-500','bg-blue-50','text-blue-600');
+                enableMainBtn(null, () => cb(c.id));
+            };
+            grid.appendChild(btn);
+        });
+        container.appendChild(grid);
+    }
+    
+    function renderTF(container, cb) { 
+        const flex = document.createElement('div'); flex.className="flex space-x-4 w-full justify-center";
+        [{id:'t',t:'O'},{id:'f',t:'X'}].forEach(o=>{
+            const b = document.createElement('button'); b.innerText=o.t;
+            b.className="tf-btn w-32 h-32 rounded-2xl border-4 border-gray-200 text-6xl font-black text-gray-300 bg-white transition-all";
+            b.onclick=()=>{ 
+                document.querySelectorAll('.tf-btn').forEach(x=>x.classList.remove('border-blue-500'));
+                b.classList.add('border-blue-500'); enableMainBtn(null, ()=>cb(o.id));
+            };
+            flex.appendChild(b);
+        });
+        container.appendChild(flex);
+    }
+    
+    function renderMatch(container, pairs, cb) { 
+        const lefts = pairs.map(p => ({id: p.left, text: p.left, type:'L'})).sort(()=>Math.random()-0.5);
+        const rights = pairs.map(p => ({id: p.left, text: p.right, type:'R'})).sort(()=>Math.random()-0.5);
+        const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-4 w-full";
+        
+        let selected = null; let matched = 0;
+        const click = (el, item) => {
+            if(el.classList.contains('matched')) return;
+            if(selected && selected.el === el) { el.classList.remove('selected'); selected=null; return; }
+            if(selected) {
+                if(selected.item.type === item.type) { selected.el.classList.remove('selected'); selected={el,item}; el.classList.add('selected'); return; }
+                if(selected.item.id === item.id) {
+                    selected.el.classList.add('matched'); el.classList.add('matched'); selected.el.classList.remove('selected');
+                    matched++; if(matched===pairs.length) enableMainBtn(null, ()=>cb(true));
+                    selected=null;
+                } else {
+                    el.classList.add('bg-red-100'); selected.el.classList.add('bg-red-100');
+                    setTimeout(()=>{ el.classList.remove('bg-red-100'); document.querySelectorAll('.selected').forEach(x=>x.classList.remove('selected','bg-red-100')); selected=null; },500);
+                }
+            } else { selected={el,item}; el.classList.add('selected'); }
+        };
+
+        [lefts, rights].forEach(arr => {
+            const col = document.createElement('div'); col.className="flex flex-col gap-2";
+            arr.forEach(o => {
+                const b = document.createElement('div'); b.className="match-item"; b.innerText=o.text;
+                b.onclick=()=>click(b,o); col.appendChild(b);
+            });
+            grid.appendChild(col);
+        });
+        container.appendChild(grid);
+    }
+
+    function renderSB(container, tokens, cb) {
+        const ans = document.createElement('div'); ans.className="w-full min-h-[60px] border-b-2 border-gray-300 mb-8 flex flex-wrap gap-2 justify-center pb-2";
+        const pool = document.createElement('div'); pool.className="flex flex-wrap gap-2 justify-center";
+        let seq = [];
+        tokens.forEach(t => {
+            const b = document.createElement('button'); b.className="word-token"; b.innerText=t;
+            b.onclick=()=>{
+                if(b.parentElement===pool) { ans.appendChild(b); seq.push(t); }
+                else { pool.appendChild(b); seq = seq.filter(x=>x!==t); }
+                if(seq.length>0) enableMainBtn(null, ()=>cb(seq)); else disableMainBtn();
+            };
+            pool.appendChild(b);
+        });
+        container.appendChild(ans); container.appendChild(pool);
+    }
+
+    function renderWriting(container, ph, cb) {
+        const t = document.createElement('textarea'); t.className="w-full h-32 p-4 border-2 border-gray-300 rounded-xl text-lg font-hand";
+        t.placeholder=ph;
+        t.oninput=(e)=>{ if(e.target.value.length>5) enableMainBtn(null, ()=>cb(e.target.value)); else disableMainBtn(); };
+        container.appendChild(t);
+    }
+
+    function disableMainBtn() { 
+        const b=document.getElementById('mainActionBtn'); b.className="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-none bg-gray-300 pointer-events-none"; b.onclick=null; 
+    }
+
+    // --- CHECK LOGIC ---
+    function checkAnswer(id, correctIds, block) { processResult(correctIds.includes(id), block); }
+    function checkSentence(seq, correctSeq, block) { processResult(JSON.stringify(seq)===JSON.stringify(correctSeq), block); }
+    function checkWriting(txt, block) { 
+        let ok=false; block.grading.must_include.forEach(k=>{ if(txt.replace(/\s/g,'').includes(k.replace(/\s/g,''))) ok=true; });
+        processResult(ok, block);
+    }
+    function handleMatchResult(ok, block) { processResult(ok, block); }
+
+    function processResult(isCorrect, block) {
+        const fb = isCorrect ? block.feedback.correct : block.feedback.incorrect;
+        showFeedback(isCorrect, fb);
+        const btn = document.getElementById('mainActionBtn');
+        if(isCorrect) { btn.innerText="계속하기"; btn.onclick=()=>nextBlock(); }
+        else {
+            gameData.hearts--; document.getElementById('gameHearts').innerText=gameData.hearts; saveGame();
+            if(gameData.hearts<=0) { alert("하트 부족!"); exitGame(); }
+            btn.innerText="계속하기"; btn.className="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_#991b1b] bg-red-500 hover:bg-red-600"; btn.onclick=()=>nextBlock();
+        }
+    }
+
+    function showFeedback(isCorrect, text) {
+        const sec=document.getElementById('feedbackSection'); sec.classList.remove('hidden');
+        document.getElementById('feedbackText').innerText = text;
+        document.getElementById('feedbackTitle').innerText = isCorrect ? "정답! 🎉" : "아쉬워요!";
+        document.getElementById('feedbackIcon').innerText = isCorrect ? "✅" : "❌";
+        sec.className = `mb-4 p-4 rounded-xl flex items-start space-x-3 animate-slide-in ${isCorrect?'bg-green-100 text-green-800':'bg-red-100 text-red-800'}`;
+    }
+
+    function nextBlock() {
+        currentBlockIndex++;
+        if(currentBlockIndex < currentLesson.blocks.length) renderCurrentBlock();
+        else finishLesson();
+    }
+
+    function finishLesson(isTA=false) {
+        if(!gameData.completedLessons.includes(currentLesson.lesson_id)) {
+            gameData.completedLessons.push(currentLesson.lesson_id);
+            gameData.xp += (isTA ? 50 : 20); // More XP for Time Attack
+        }
+        saveGame();
+        document.getElementById('modalTitle').innerText = isTA ? "타임어택 성공!" : "레슨 완료!";
+        document.getElementById('modalXP').innerText = isTA ? "+50" : "+20";
+        document.getElementById('completeModal').classList.remove('hidden');
+    }
+
+    function closeCompleteModal() {
+        document.getElementById('completeModal').classList.add('hidden');
+        exitGame();
+    }
+
+    // Fix: Pass levelObj to startLesson for retry logic
+    const oldStartLesson = startLesson;
+    startLesson = function(level, lesson, lIdx) {
+        lesson.levelObj = level; // Inject level ref
+        oldStartLesson(level, lesson, lIdx);
+    }
+
+    initGame();
+</script>
+</body>
+</html>
