@@ -3,99 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>말랑말랑 관용어 탐험대</title>
+    <title>말랑말랑 관용어 탐험대 - Level 1</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
     <style>
+        /* 기본 설정 */
         body {
             font-family: 'Jua', sans-serif;
             background-color: #f0f9ff;
             user-select: none;
-            overscroll-behavior: none;
             -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
         }
         .font-hand { font-family: 'Gamja Flower', cursive; }
-        .font-pen { font-family: 'Nanum Pen Script', cursive; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Animations */
+        /* 애니메이션 */
         @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
 
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-slide-in { animation: slideIn 0.4s ease-out forwards; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-5deg); } 75% { transform: translateX(5px) rotate(5deg); } }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
 
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.2s ease-in-out 3; }
+        @keyframes sparkle { 0% { transform: scale(0) rotate(0deg); opacity: 0; } 50% { transform: scale(1.5) rotate(180deg); opacity: 1; } 100% { transform: scale(0) rotate(360deg); opacity: 0; } }
+        .sparkle-effect::after {
+            content: '✨'; position: absolute; top: -10px; right: -10px; font-size: 2rem;
+            animation: sparkle 0.6s ease-out; pointer-events: none;
+        }
 
-        @keyframes comboPop { 0% { transform: scale(0.5) rotate(-10deg); opacity: 0; } 50% { transform: scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
-        .combo-effect { animation: comboPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        /* 매칭 게임 스타일 */
+        .match-card {
+            transition: all 0.2s;
+            backface-visibility: hidden;
+        }
+        .match-card.selected {
+            background-color: #fef08a; /* yellow-200 */
+            border-color: #eab308; /* yellow-500 */
+            transform: scale(1.05);
+        }
+        .match-card.matched {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #15803d; /* green-700 */
+            opacity: 0.5;
+            pointer-events: none;
+            transform: scale(1);
+        }
 
-        /* Stage Button */
+        /* 데미지 텍스트 애니메이션 (보스전) */
+        @keyframes floatUpFade { 
+            0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 
+            50% { transform: translate(-50%, -30px) scale(1.5); }
+            100% { opacity: 0; transform: translate(-50%, -60px) scale(1); } 
+        }
+        .damage-text {
+            position: absolute; left: 50%; top: 20%;
+            color: #ef4444; font-weight: 900; font-size: 3rem;
+            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+            animation: floatUpFade 0.8s ease-out forwards;
+            pointer-events: none; z-index: 50;
+        }
+
+        /* 3D 버튼 스타일 */
+        .btn-3d { transition: all 0.1s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn-3d:active { transform: translateY(4px); box-shadow: none; }
+        .btn-3d.locked { background-color: #e5e7eb; color: #9ca3af; box-shadow: 0 4px 0 #d1d5db; pointer-events: none; }
+
+        /* 힌트 버튼 */
+        .hint-btn {
+            background: linear-gradient(to bottom, #fef08a, #facc15);
+            border: 2px solid #ca8a04;
+            color: #854d0e;
+        }
+
+        /* 스테이지 버튼 */
         .stage-btn {
             width: 70px; height: 70px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; box-shadow: 0 6px 0 rgba(0,0,0,0.2);
-            transition: transform 0.1s, box-shadow 0.1s;
-            position: relative; z-index: 10;
+            font-size: 24px; position: relative; z-index: 10;
         }
-        .stage-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
-        .stage-btn.locked { background-color: #e5e7eb; color: #9ca3af; box-shadow: 0 4px 0 #d1d5db; }
-        .stage-btn.completed { background-color: #fbbf24; color: white; box-shadow: 0 6px 0 #d97706; }
-        .stage-btn.current { background-color: #58cc02; color: white; box-shadow: 0 6px 0 #46a302; }
-        /* Time Attack Special Style */
-        .stage-btn.checkpoint { border: 4px solid #fff; }
-        .stage-btn.checkpoint.current { background-color: #ef4444; box-shadow: 0 6px 0 #b91c1c; }
-        .stage-btn.checkpoint.completed { background-color: #f59e0b; box-shadow: 0 6px 0 #b45309; }
         
-        /* Token for Sentence Builder */
-        .word-token {
-            background: white; border: 2px solid #e5e7eb; border-radius: 12px;
-            padding: 8px 16px; font-size: 18px; color: #374151;
-            box-shadow: 0 3px 0 #e5e7eb; margin: 4px; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .word-token:active { transform: translateY(2px); box-shadow: 0 1px 0 #e5e7eb; }
-        .word-token.selected { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; box-shadow: 0 3px 0 #93c5fd; }
-
-        /* Match Game Items */
-        .match-item {
-            background: white; border: 2px solid #e5e7eb; border-radius: 16px;
-            padding: 16px; min-height: 80px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s; text-align: center;
-        }
-        .match-item.selected { border-color: #3b82f6; background-color: #eff6ff; }
-        .match-item.matched { border-color: #22c55e; background-color: #dcfce7; color: #15803d; pointer-events: none; }
-
-        /* INTRO & GATE STYLES */
+        /* 인트로 게이트 */
         #introView { position: absolute; inset: 0; z-index: 100; overflow: hidden; display: flex; }
-        .gate-panel {
-            flex: 1; height: 100%; background-color: #dbeafe; /* blue-100 */
-            position: relative; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 20; border-right: 1px solid #bfdbfe;
-        }
+        .gate-panel { flex: 1; height: 100%; background-color: #dbeafe; position: relative; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); z-index: 20; border-right: 1px solid #bfdbfe; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .gate-panel.right { border-left: 1px solid #bfdbfe; border-right: none; }
-        
-        /* When opening */
         #introView.open .gate-panel:first-child { transform: translateX(-100%); }
         #introView.open .gate-panel.right { transform: translateX(100%); }
-        
-        .intro-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 30; text-align: center; width: 100%; transition: opacity 0.5s ease-out;
-        }
+        .intro-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 30; text-align: center; width: 100%; transition: opacity 0.5s ease-out; }
         #introView.open .intro-content { opacity: 0; pointer-events: none; }
 
-        .cloud-deco { position: absolute; font-size: 4rem; opacity: 0.6; animation: float 4s ease-in-out infinite; }
-        .title-word { display: inline-block; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
+        /* 채팅 말풍선 꼬리 */
+        .chat-bubble-me::after { content: ''; position: absolute; right: -8px; bottom: 8px; border-width: 8px 0 8px 8px; border-color: transparent transparent transparent #fef01b; }
+        .chat-bubble-you::after { content: ''; position: absolute; left: -8px; top: 8px; border-width: 8px 8px 8px 0; border-color: transparent white transparent transparent; }
     </style>
 </head>
 <body class="bg-blue-50 h-screen flex justify-center overflow-hidden">
@@ -104,95 +110,72 @@
         
         <!-- INTRO VIEW -->
         <div id="introView">
-            <!-- Left Gate -->
-            <div class="gate-panel">
-                <div class="cloud-deco" style="top: 15%; left: 15%; animation-delay: 0s;">☁️</div>
-                <div class="cloud-deco" style="bottom: 25%; right: 20%; animation-delay: 1s; font-size: 3rem;">🎈</div>
-                <div class="cloud-deco" style="bottom: 10%; left: 10%; animation-delay: 2s; font-size: 5rem;">🌳</div>
-            </div>
-            <!-- Right Gate -->
-            <div class="gate-panel right">
-                <div class="cloud-deco" style="top: 20%; right: 10%; animation-delay: 0.5s;">☁️</div>
-                <div class="cloud-deco" style="top: 40%; left: 10%; animation-delay: 1.5s; font-size: 2.5rem;">✨</div>
-                <div class="cloud-deco" style="bottom: 15%; right: 15%; animation-delay: 2.5s; font-size: 4rem;">🌷</div>
-            </div>
-            <!-- Center Content -->
+            <div class="gate-panel"><div class="text-6xl animate-float">☁️</div></div>
+            <div class="gate-panel right"><div class="text-6xl animate-float" style="animation-delay: 1s;">🎈</div></div>
             <div class="intro-content">
                 <h1 class="flex flex-col items-center mb-10">
-                    <span class="text-6xl font-black text-blue-500 drop-shadow-md mb-3 title-word font-hand" style="animation-delay: 0.1s">말랑말랑</span>
-                    <span class="text-5xl font-bold text-gray-700 drop-shadow-sm title-word" style="animation-delay: 0.3s">관용어 탐험대</span>
+                    <span class="text-6xl font-black text-blue-500 drop-shadow-md mb-3 font-hand animate-pop">말랑말랑</span>
+                    <span class="text-4xl font-bold text-gray-700 drop-shadow-sm animate-pop" style="animation-delay: 0.2s">관용어 탐험대</span>
                 </h1>
-                <div class="title-word" style="animation-delay: 0.6s">
-                    <button onclick="startExploration()" class="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-5 px-12 rounded-full shadow-[0_6px_0_#15803d] active:translate-y-2 active:shadow-none transition-all animate-bounce">
-                        탐험 시작! 🚀
-                    </button>
-                </div>
+                <button onclick="startApp()" class="btn-3d bg-green-500 text-white text-2xl font-bold py-4 px-10 rounded-full animate-bounce">
+                    탐험 시작! 🚀
+                </button>
             </div>
         </div>
 
-        <!-- Header -->
+        <!-- HEADER -->
         <header class="h-16 bg-white border-b-2 border-gray-100 flex items-center justify-between px-4 z-20 shrink-0">
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">❤️</span>
                 <span id="heartsDisplay" class="text-xl font-bold text-red-500">5</span>
             </div>
-            <h1 class="text-xl font-bold text-gray-700">말랑말랑 관용어</h1>
+            <h1 class="text-xl font-bold text-gray-700">Level 1: 눈·귀 탐험</h1>
             <div class="flex items-center space-x-2">
                 <span class="text-xl font-bold text-yellow-500" id="xpDisplay">0</span>
                 <span class="text-sm font-bold text-gray-400">XP</span>
             </div>
         </header>
 
-        <!-- Map View -->
+        <!-- MAP VIEW -->
         <main id="mapView" class="flex-1 overflow-y-auto no-scrollbar relative bg-[#dcfce7] p-6 pb-24">
             <div class="absolute top-10 left-10 text-4xl opacity-20 animate-float">☁️</div>
-            <div class="absolute top-40 right-10 text-5xl opacity-20">🌳</div>
-            
-            <div id="levelsContainer" class="flex flex-col items-center space-y-8 pt-6 pb-20">
-                <!-- Dynamic Content -->
+            <div class="absolute bottom-20 right-10 text-5xl opacity-20">🌳</div>
+            <div id="levelsContainer" class="flex flex-col items-center space-y-6 pt-6 pb-20">
+                <!-- Levels will be injected here -->
             </div>
         </main>
 
-        <!-- Game View -->
+        <!-- GAME VIEW -->
         <div id="gameView" class="hidden absolute inset-0 bg-white z-50 flex flex-col">
             <!-- Game Header -->
             <div class="h-16 flex items-center justify-between px-4 shrink-0 bg-white border-b-2 border-gray-100">
                 <button onclick="exitGame()" class="text-gray-400 text-2xl hover:text-gray-600">✕</button>
                 <div class="flex-1 mx-4">
-                    <!-- Timer / Progress Bar -->
                     <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden relative">
                         <div id="quizProgress" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
-                        <div id="timerBar" class="hidden h-full bg-red-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <span id="headerRightIcon" class="text-red-500 text-xl mr-1">❤️</span>
+                    <span class="text-red-500 text-xl mr-1">❤️</span>
                     <span id="gameHearts" class="font-bold text-gray-700">5</span>
                 </div>
             </div>
 
-            <!-- Combo Overlay for Time Attack -->
-            <div id="comboOverlay" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-                <div class="text-4xl font-black text-yellow-500 drop-shadow-lg combo-effect" id="comboText">Combo x2!</div>
-                <div class="text-xl font-bold text-green-500 text-center drop-shadow-md mt-1" id="timeBonusText">+3초</div>
-            </div>
-
             <!-- Block Content Area -->
             <div id="blockContainer" class="flex-1 overflow-y-auto p-6 flex flex-col items-center max-w-full relative">
-                <!-- Dynamic Block -->
+                <!-- Dynamic Content -->
             </div>
 
             <!-- Bottom Action Area -->
             <div id="actionArea" class="p-4 border-t-2 border-gray-100 bg-white shrink-0">
-                <div id="feedbackSection" class="hidden mb-4 p-4 rounded-xl flex items-start space-x-3 animate-slide-in">
+                <div id="feedbackSection" class="hidden mb-4 p-4 rounded-xl flex items-start space-x-3 animate-pop">
                     <div id="feedbackIcon" class="text-3xl"></div>
                     <div>
                         <h3 id="feedbackTitle" class="text-lg font-bold"></h3>
                         <p id="feedbackText" class="text-sm text-gray-700 mt-1"></p>
                     </div>
                 </div>
-                
-                <button id="mainActionBtn" class="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 transition-all bg-gray-300 pointer-events-none">
+                <button id="mainActionBtn" class="btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-gray-300 pointer-events-none">
                     확인
                 </button>
             </div>
@@ -200,771 +183,834 @@
 
         <!-- Level Complete Modal -->
         <div id="completeModal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-3xl p-8 text-center w-full max-w-sm animate-pop border-4 border-yellow-400">
-                <div id="modalIcon" class="text-7xl mb-4 animate-bounce">🎉</div>
+            <div class="bg-white rounded-3xl p-8 text-center w-full max-w-sm animate-pop border-4 border-yellow-400 relative overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CiAgPGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmQwMDAiLz4KPC9zdmc+')]"></div>
+                <div class="text-7xl mb-4 animate-bounce">🎉</div>
                 <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-2">레슨 완료!</h2>
-                <p id="modalDesc" class="text-gray-500 mb-8 text-lg">관용어 실력이 쑥쑥 자랐어요!</p>
-                <div class="flex justify-center mb-8">
-                    <div class="bg-yellow-50 px-6 py-3 rounded-2xl border-2 border-yellow-200">
-                        <div class="text-sm text-yellow-600 font-bold uppercase tracking-wide">XP 획득</div>
-                        <div id="modalXP" class="text-3xl font-bold text-yellow-500">+20</div>
+                <div class="flex justify-center mb-8 mt-6">
+                    <div class="bg-yellow-50 px-8 py-4 rounded-2xl border-2 border-yellow-200">
+                        <div class="text-sm text-yellow-600 font-bold uppercase tracking-wide">획득 XP</div>
+                        <div id="modalXP" class="text-4xl font-black text-yellow-500">+20</div>
                     </div>
                 </div>
-                <button onclick="closeCompleteModal()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl font-bold text-xl shadow-[0_4px_0_#15803d]">
+                <button onclick="closeCompleteModal()" class="btn-3d w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-xl shadow-[0_4px_0_#15803d]">
                     계속하기
                 </button>
             </div>
         </div>
 
-        <!-- Fail Modal -->
-        <div id="failModal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-3xl p-8 text-center w-full max-w-sm animate-pop border-4 border-red-400">
-                <div class="text-7xl mb-4">⏰</div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">시간 초과!</h2>
-                <p class="text-gray-500 mb-8 text-lg">조금만 더 빠르면 할 수 있어요!</p>
-                <button onclick="retryTimeAttack()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl font-bold text-xl shadow-[0_4px_0_#991b1b]">
-                    다시 도전하기
-                </button>
-            </div>
-        </div>
     </div>
 
 <script>
     /**
-     * Data & Logic
+     * SOUND MANAGER (Web Audio API)
      */
-    
-    // --- Data Definitions ---
-    // 복습 데이터 (타임어택용)
-    const REVIEW_DATA = {
-        "W01": [
-            {q:"귀가 얇다", m:"남의 말을 쉽게 믿다"}, {q:"귀를 기울이다", m:"잘 듣다"},
-            {q:"귀가 솔깃하다", m:"흥미가 생기다"}, {q:"눈에 띄다", m:"잘 보이다"}
-        ],
-        "W02": [
-            {q:"입이 무겁다", m:"비밀을 잘 지키다"}, {q:"입이 짧다", m:"음식을 조금 먹다"},
-            {q:"입을 열다", m:"말하기 시작하다"}, {q:"입을 다물다", m:"말하지 않다"}
-        ]
-    };
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
 
-    // Week 1: Eyes & Ears (Full Activities - Writing Removed)
-    const week1Json = {
-      "week_id": "W01",
-      "title": "Level 1: 눈·귀 관용어",
-      "lessons": [
-        {
-          "lesson_id": "W01-L01",
-          "title": "귀가 얇다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "민지는 친구가 추천한 물건을 보자마자 바로 사고 싶어졌어요.", "media": "🛒" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "이런 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 얇다" }, { "id": "c2", "text": "눈이 높다" }, { "id": "c3", "text": "손이 빠르다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 남의 말에 쉽게 흔들리면 ‘귀가 얇다’예요.", "incorrect": "‘귀가 얇다’는 남의 말을 쉽게 믿는다는 뜻이에요." } },
-            { "type": "true_false", "prompt": { "text": "‘귀가 얇다’는 진짜 귀 두께가 얇다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! 성격을 말하는 거예요.", "incorrect": "관용어는 겉말 그대로가 아니에요." } },
-            { "type": "cloze", "prompt": { "text": "민지는 (   )라서 친구 말에 쉽게 흔들려요." }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 얇다" }, { "id": "c2", "text": "귀를 기울이다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "남의 말을 쉽게 믿는 성격이에요." } },
-            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민지는", "귀가", "얇아서", "추천을", "바로", "믿었어요."], "correct_sequence": ["민지는", "귀가", "얇아서", "추천을", "바로", "믿었어요."] }, "feedback": { "correct": "완벽해요!", "incorrect": "순서를 다시 생각해봐요." } }
-          ]
-        },
-        {
-          "lesson_id": "W01-L02",
-          "title": "귀를 기울이다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "선생님이 중요한 안내를 하고 있어요. 민수는 집중해서 듣고 있어요.", "media": "👂" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "집중해서 잘 들을 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀를 기울이다" }, { "id": "c2", "text": "귀가 솔깃하다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "정답! ‘잘 듣다’는 뜻이에요.", "incorrect": "집중해서 듣는 상황이에요." } },
-            { "type": "true_false", "prompt": { "text": "‘귀를 기울이다’는 귀를 실제로 기울이는 행동만 뜻한다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "맞아요! 마음을 모아 듣는다는 뜻도 있어요.", "incorrect": "비유적인 표현이랍니다." } },
-            { "type": "cloze", "prompt": { "text": "중요한 설명이니 (   )고 잘 들어야 해요." }, "interaction": { "choices": [{ "id": "c1", "text": "귀를 기울이" }, { "id": "c2", "text": "귀가 얇" }, { "id": "c3", "text": "눈에 띄" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "좋아요!", "incorrect": "집중해서 듣는다는 뜻을 찾아봐요." } },
-            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["저는", "선생님", "말에", "귀를", "기울였어요."], "correct_sequence": ["저는", "선생님", "말에", "귀를", "기울였어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } }
-          ]
-        },
-        {
-          "lesson_id": "W01-L03",
-          "title": "귀가 솔깃하다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "친구가 ‘놀이공원 할인해!’라고 말하자 민지의 표정이 달라졌어요.", "media": "🎡" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "흥미가 생길 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "귀가 솔깃하다" }, { "id": "c2", "text": "귀가 얇다" }, { "id": "c3", "text": "눈에 띄다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 관심이 생긴다는 뜻이에요.", "incorrect": "흥미가 생기는 상황이에요." } },
-            { "type": "true_false", "prompt": { "text": "‘귀가 솔깃하다’는 귀가 반짝거린다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "맞아요! 마음이 끌린다는 뜻이에요.", "incorrect": "비유적인 표현이에요." } }
-          ]
-        },
-        {
-          "lesson_id": "W01-L04",
-          "title": "눈에 띄다",
-          "blocks": [
-             { "type": "match", "prompt": { "text": "뜻이 같은 것끼리 연결하세요." }, "interaction": { "pairs": [{ "left": "눈에 띄다", "right": "잘 보이다" }, { "left": "귀가 솔깃하다", "right": "흥미가 생기다" }] }, "feedback": { "correct": "잘 연결했어요!", "incorrect": "다시 한 번 생각해봐요." } },
-             { "type": "mcq", "prompt": { "text": "한눈에 잘 보일 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "눈에 띄다" }, { "id": "c2", "text": "귀를 기울이다" }, { "id": "c3", "text": "귀가 얇다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "정답!", "incorrect": "빨간 모자가 한눈에 보였어요." } },
-             { "type": "cloze", "prompt": { "text": "노란 우산이 멀리서도 (   )." }, "interaction": { "choices": [{ "id": "c1", "text": "눈에 띄었어요" }, { "id": "c2", "text": "귀를 기울였어요" }, { "id": "c3", "text": "귀가 얇았어요" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 맞아요!", "incorrect": "잘 보인다는 뜻이 필요해요." } }
-          ]
+    const Sound = {
+        play: (type) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') { // 딩동댕
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'wrong') { // 띠-
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'hit') { // 퍽!
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'chat') { // 톡!
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'pop') { // 팝
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
         }
-      ]
     };
 
-    // Week 2: Mouth (Full Activities - Writing Removed)
-    const week2Json = {
-      "week_id": "W02",
-      "title": "Level 2: 입 관용어",
-      "lessons": [
+    /**
+     * DATA: Spiral Learning Structure
+     * 개선: 레슨당 활동 수 4~5개로 증량하여 완전 습득 유도
+     */
+    const LEVEL_1_DATA = [
+        // L01: 귀가 얇다 (기본)
         {
-          "lesson_id": "W02-L01",
-          "title": "입이 무겁다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "친구가 비밀 이야기를 했는데 민수는 다른 친구에게 말하지 않았어요.", "media": "🤐" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "비밀을 잘 지키는 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "입이 무겁다" }, { "id": "c2", "text": "입이 짧다" }, { "id": "c3", "text": "입을 열다" }, { "id": "c4", "text": "입을 다물다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 비밀을 잘 지키면 ‘입이 무겁다’예요.", "incorrect": "‘입이 무겁다’는 비밀을 잘 지킨다는 뜻이에요." } },
-            { "type": "true_false", "prompt": { "text": "‘입이 무겁다’는 입이 진짜 무겁다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘비밀을 잘 지킨다’라는 뜻이에요.", "incorrect": "틀렸어요. 관용어는 겉말 그대로가 아닐 수 있어요." } },
-            { "type": "cloze", "prompt": { "text": "민수는 (   )라서 친구의 비밀을 지켜 줬어요." }, "interaction": { "choices": [{ "id": "c1", "text": "입이 무겁다" }, { "id": "c2", "text": "입이 짧다" }, { "id": "c3", "text": "입을 열다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "비밀을 잘 지킨다는 뜻이 필요해요." } },
-            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민수는", "입이", "무거워서", "비밀을", "지켰어요."], "correct_sequence": ["민수는", "입이", "무거워서", "비밀을", "지켰어요."] }, "feedback": { "correct": "완벽해요!", "incorrect": "순서를 다시 확인해보세요." } }
-          ]
+            id: "L01", title: "귀가 얇다",
+            blocks: [
+                { type: "concept_card", concept: { word: "귀가 얇다", meaning: "남의 말을 쉽게 믿는 성격", media: "👂📄" } },
+                { type: "context_quiz", context: { text: "민지는 친구가 '이 지우개 쓰면 100점 맞는데!'라고 하자마자 바로 샀어요.", media: "🛒" }, quiz: { prompt: "남의 말을 쉽게 믿는 민지를 보고 하는 말은?", choices: [{id:"c1", text:"귀가 얇다"}, {id:"c2", text:"손이 크다"}, {id:"c3", text:"입이 무겁다"}], answer:"c1" }, feedback: { correct: "정답! 펄럭거리는 얇은 귀를 상상해보세요.", incorrect: "남의 말을 잘 믿으면 '귀가 얇다'!" } },
+                { type: "emoji_detective", prompt: { text: "이모지 단서를 보고 관용어를 완성해보세요!" }, interaction: { clues: ["👂", "➕", "📄", "➕", "🌬️"], correct_sequence: ["귀가", "얇다"], pool: ["귀가", "얇다", "두껍다", "코가"] }, feedback: { correct: "명탐정이네요!", incorrect: "종이처럼 얇은 귀!" } },
+                // [추가] 활용 단계: 문장 만들기
+                { type: "sentence_builder", prompt: { text: "문장을 완성하세요." }, interaction: { tokens: ["민지는", "귀가", "얇아서", "친구", "말을", "믿었다"], correct_sequence: ["민지는", "귀가", "얇아서", "친구", "말을", "믿었다"] }, feedback: { correct: "완벽해요!", incorrect: "누가 귀가 얇았나요?" } },
+                // [추가] 실전: 채팅
+                { type: "chat_quiz", prompt: { text: "친구에게 충고하기" }, interaction: { my_avatar: "🐰", friend_avatar: "🐹", friend_name: "햄찌", messages: [{ is_me: false, text: "야, 저 약 먹으면 키 큰대!" }, { is_me: true, text: "또 속냐? 넌 너무 ( ? )." }], choices: [{id:"c1", text:"귀가 얇아"}, {id:"c2", text:"손이 빨라"}, {id:"c3", text:"발이 넓어"}], answer: "c1" }, feedback: { correct: "잘했어요!", incorrect: "쉽게 속는 친구에게 쓰는 말이에요." } }
+            ]
         },
+        // L02: 귀를 기울이다 (구별)
         {
-          "lesson_id": "W02-L02",
-          "title": "입이 짧다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "급식이 나왔지만 민지는 몇 숟가락만 먹고 그만 먹었어요.", "media": "🍚" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "음식을 조금 먹는 사람을 뭐라고 할까요?" }, "interaction": { "choices": [{ "id": "c1", "text": "입이 짧다" }, { "id": "c2", "text": "입이 무겁다" }, { "id": "c3", "text": "입을 열다" }, { "id": "c4", "text": "입을 다물다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! ‘입이 짧다’는 음식을 조금 먹는 뜻이에요.", "incorrect": "몇 숟가락만 먹었어요." } },
-            { "type": "true_false", "prompt": { "text": "‘입이 짧다’는 입의 길이가 짧다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘음식을 조금 먹다’예요.", "incorrect": "관용어는 비유예요." } },
-            { "type": "cloze", "prompt": { "text": "저는 (   )라서 조금만 먹어요." }, "interaction": { "choices": [{ "id": "c1", "text": "입이 짧다" }, { "id": "c2", "text": "입이 무겁다" }, { "id": "c3", "text": "입을 열다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "문맥에 딱 맞아요!", "incorrect": "음식을 조금 먹는다는 뜻이에요." } },
-            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["저는", "입이", "짧아서", "조금만", "먹어요."], "correct_sequence": ["저는", "입이", "짧아서", "조금만", "먹어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } }
-          ]
+            id: "L02", title: "귀를 기울이다",
+            blocks: [
+                { type: "concept_card", concept: { word: "귀를 기울이다", meaning: "남의 말을 주의 깊게 듣다", media: "👂👂" } },
+                { type: "context_quiz", context: { text: "선생님이 중요한 시험 힌트를 주고 계세요.", media: "👩‍🏫" }, quiz: { prompt: "이럴 때 필요한 태도는?", choices: [{id:"c1", text:"귀를 기울이다"}, {id:"c2", text:"눈을 감다"}, {id:"c3", text:"귀가 얇다"}], answer:"c1" }, feedback: { correct: "맞아요! 집중해서 듣는 거예요.", incorrect: "'귀가 얇다'는 속는 것이고, '기울이다'는 듣는 거예요." } },
+                { type: "emoji_detective", prompt: { text: "이모지를 보고 관용어를 완성하세요." }, interaction: { clues: ["👂", "➕", "📏", "➕", "🔊"], correct_sequence: ["귀를", "기울이다"], pool: ["귀를", "기울이다", "막다", "코를"] }, feedback: { correct: "정답!", incorrect: "몸을 기울여서 듣는 모습!" } },
+                { type: "sentence_builder", prompt: { text: "문장을 완성하세요." }, interaction: { tokens: ["나는", "친구의", "고민에", "귀를", "기울였다"], correct_sequence: ["나는", "친구의", "고민에", "귀를", "기울였다"] }, feedback: { correct: "참 잘했어요!", incorrect: "친구의 고민을 들어주세요." } },
+                // [추가] 나선형 복습 퀴즈
+                { type: "context_quiz", context: { text: "[복습] '저거 공짜래!' 하는 말에 솔깃해서 바로 줄을 섰어요.", media: "🏃" }, quiz: { prompt: "이 사람의 성격은?", choices: [{id:"c1", text:"귀가 얇다"}, {id:"c2", text:"귀를 기울이다"}], answer:"c1" }, feedback: { correct: "복습도 완벽하군요!", incorrect: "쉽게 믿고 행동하는 건 '귀가 얇다'예요." } }
+            ]
         },
+        // L03: 귀가 솔깃하다 (통합)
         {
-          "lesson_id": "W02-L03",
-          "title": "입을 열다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "발표 시간인데 망설이던 민지가 드디어 말을 시작했어요.", "media": "🗣️" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "말하기를 시작할 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "입을 열다" }, { "id": "c2", "text": "입을 다물다" }, { "id": "c3", "text": "입이 무겁다" }, { "id": "c4", "text": "입이 짧다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! ‘입을 열다’는 말하기를 시작한다는 뜻이에요.", "incorrect": "드디어 말을 시작했어요." } },
-            { "type": "true_false", "prompt": { "text": "‘입을 열다’는 입을 실제로 벌린다는 뜻이다." }, "interaction": { "correct_choice_ids": ["f"] }, "feedback": { "correct": "정답! ‘말하기 시작하다’라는 뜻이에요.", "incorrect": "말하기 시작할 때 쓰는 관용어예요." } },
-            { "type": "cloze", "prompt": { "text": "민지는 용기를 내서 드디어 (   )." }, "interaction": { "choices": [{ "id": "c1", "text": "입을 열었어요" }, { "id": "c2", "text": "입을 다물었어요" }, { "id": "c3", "text": "입이 짧았어요" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "좋아요!", "incorrect": "말하기 시작했다는 뜻이 필요해요." } },
-            { "type": "sentence_builder", "prompt": { "text": "문장을 완성하세요." }, "interaction": { "tokens": ["민지는", "용기를", "내서", "입을", "열었어요."], "correct_sequence": ["민지는", "용기를", "내서", "입을", "열었어요."] }, "feedback": { "correct": "완료!", "incorrect": "순서를 다시!" } }
-          ]
+            id: "L03", title: "귀가 솔깃하다",
+            blocks: [
+                { type: "concept_card", concept: { word: "귀가 솔깃하다", meaning: "마음이 끌려 관심이 생기다", media: "👂✨" } },
+                // 매칭 게임 (L01~L03 복습)
+                { type: "match_game", prompt: { text: "지금까지 배운 '귀' 관용어 짝꿍을 찾아주세요!" }, interaction: { pairs: [ { word: "귀가 얇다", mean: "쉽게 믿음" }, { word: "귀를 기울이다", mean: "경청함" }, { word: "귀가 솔깃하다", mean: "관심 생김" } ] }, feedback: { correct: "귀 관용어 마스터!", incorrect: "" } },
+                { type: "emoji_detective", prompt: { text: "이모지 단서를 보세요." }, interaction: { clues: ["👂", "➕", "🍭", "➕", "✨"], correct_sequence: ["귀가", "솔깃하다"], pool: ["귀가", "솔깃하다", "아프다", "눈이"] }, feedback: { correct: "딩동댕!", incorrect: "달콤한 말에 마음이 쏠려요." } },
+                { type: "chat_quiz", prompt: { text: "솔깃한 제안에 답장하기" }, interaction: { my_avatar: "🐰", friend_avatar: "🐱", friend_name: "냥이", messages: [{ is_me: false, text: "이번 주말에 숙제 다 하면 놀이공원 보내준대!" }, { is_me: true, text: "오? 그 말에 ( ? )!" }], choices: [{id:"c1", text:"귀가 솔깃한데"}, {id:"c2", text:"귀를 기울였는데"}, {id:"c3", text:"귀가 얇은데"}], answer: "c1" }, feedback: { correct: "제안이 마음에 쏙 들었군요!", incorrect: "흥미가 생길 땐 '솔깃'!" } },
+                // [추가] 통합 문장 만들기
+                { type: "sentence_builder", prompt: { text: "문장을 완성하세요." }, interaction: { tokens: ["솔깃한", "제안에", "귀를", "기울였다"], correct_sequence: ["솔깃한", "제안에", "귀를", "기울였다"] }, feedback: { correct: "두 가지 관용어를 응용했네요!", incorrect: "순서를 다시 생각해보세요." } }
+            ]
         },
+        // L04: 눈에 띄다 (범주 전환)
         {
-          "lesson_id": "W02-L04",
-          "title": "입을 다물다",
-          "blocks": [
-            { "type": "context_scene", "prompt": { "text": "친구가 비밀을 지켜 달라고 해서 민지는 아무 말도 하지 않았어요.", "media": "🤐" }, "interaction": { "mode": "tap_to_continue" } },
-            { "type": "mcq", "prompt": { "text": "말을 하지 않을 때 쓰는 말은?" }, "interaction": { "choices": [{ "id": "c1", "text": "입을 다물다" }, { "id": "c2", "text": "입을 열다" }, { "id": "c3", "text": "입이 짧다" }], "correct_choice_ids": ["c1"] }, "feedback": { "correct": "맞아요! 침묵을 지킨다는 뜻이에요.", "incorrect": "말을 안 하는 상황이에요." } },
-            { "type": "match", "prompt": { "text": "관용어와 뜻을 연결하세요." }, "interaction": { "pairs": [{ "left": "입을 다물다", "right": "말하지 않다" }, { "left": "입을 열다", "right": "말하기 시작하다" }, { "left": "입이 무겁다", "right": "비밀을 잘 지키다" }] }, "feedback": { "correct": "좋아요!", "incorrect": "다시 연결해 볼까요?" } }
-          ]
+            id: "L04", title: "눈에 띄다",
+            blocks: [
+                { type: "concept_card", concept: { word: "눈에 띄다", meaning: "두드러지게 잘 보이다", media: "👀⚡" } },
+                { type: "context_quiz", context: { text: "모두 검은 옷을 입었는데, 지수만 형광색 옷을 입었어요.", media: "✨" }, quiz: { prompt: "이럴 때 쓰는 말은?", choices: [{id:"c1", text:"눈에 띄다"}, {id:"c2", text:"귀를 기울이다"}, {id:"c3", text:"귀가 솔깃하다"}], answer:"c1" }, feedback: { correct: "맞아요! 확 튀어 보인다는 뜻이죠.", incorrect: "잘 '보이는' 것을 찾아보세요." } },
+                { type: "emoji_detective", prompt: { text: "이모지 단서를 보세요." }, interaction: { clues: ["👀", "➕", "⚡", "➕", "🎯"], correct_sequence: ["눈에", "띄다"], pool: ["눈에", "띄다", "감다", "입에"] }, feedback: { correct: "정답!", incorrect: "눈에 확 들어온다는 뜻이에요." } },
+                { type: "chat_quiz", prompt: { text: "친구 찾기" }, interaction: { my_avatar: "🐰", friend_avatar: "🐶", friend_name: "멍이", messages: [{ is_me: false, text: "너 오늘 어디 있어?" }, { is_me: true, text: "나 빨간 모자 썼어! 사람들 사이에서 ( ? ) 걸?" }], choices: [{id:"c1", text:"눈에 띌"}, {id:"c2", text:"귀가 얇을"}, {id:"c3", text:"귀를 기울일"}], answer: "c1" }, feedback: { correct: "금방 찾겠네요!", incorrect: "잘 보인다는 뜻을 고르세요." } },
+                { type: "sentence_builder", prompt: { text: "문장을 완성하세요." }, interaction: { tokens: ["빨간", "모자가", "멀리서도", "눈에", "띄었다"], correct_sequence: ["빨간", "모자가", "멀리서도", "눈에", "띄었다"] }, feedback: { correct: "잘했어요!", incorrect: "무엇이 눈에 띄었나요?" } }
+            ]
+        },
+        // L05: 눈이 높다 (심화)
+        {
+            id: "L05", title: "눈이 높다",
+            blocks: [
+                { type: "concept_card", concept: { word: "눈이 높다", meaning: "물건을 고르는 기준이 높다", media: "👀📏" } },
+                { type: "context_quiz", context: { text: "민수는 백화점 전체를 다 돌아도 마음에 드는 옷이 없대요.", media: "🛍️" }, quiz: { prompt: "민수는 어떤 편인가요?", choices: [{id:"c1", text:"눈이 높다"}, {id:"c2", text:"눈에 띄다"}, {id:"c3", text:"귀가 얇다"}], answer:"c1" }, feedback: { correct: "기준이 까다롭군요!", incorrect: "단순히 보이는 게 아니라, 고르는 기준이 높은 거예요." } },
+                { type: "emoji_detective", prompt: { text: "이모지 퀴즈!" }, interaction: { clues: ["👀", "➕", "📏", "➕", "🏔️"], correct_sequence: ["눈이", "높다"], pool: ["눈이", "높다", "낮다", "발이"] }, feedback: { correct: "맞아요! 산처럼 기준이 높아요.", incorrect: "보는 기준이 높다는 뜻이에요." } },
+                { type: "chat_quiz", prompt: { text: "친구에게 한마디" }, interaction: { my_avatar: "🐰", friend_avatar: "🐮", friend_name: "소라", messages: [{ is_me: false, text: "아니, 다 별로야. 더 예쁘고 좋은 거 없어?" }, { is_me: false, text: "으이구, 넌 너무 ( ? ). 아무거나 좀 사!" }], choices: [{id:"c1", text:"눈이 높아"}, {id:"c2", text:"귀가 얇아"}, {id:"c3", text:"눈에 띄어"}], answer: "c1" }, feedback: { correct: "정답!", incorrect: "까다로운 친구에게 쓰는 말!" } },
+                // [추가] 통합 복습 (L01~L05)
+                { type: "context_quiz", context: { text: "[총정리] 선생님 말씀을 열심히 듣는 건?", media: "👂" }, quiz: { prompt: "알맞은 관용어는?", choices: [{id:"c1", text:"귀를 기울이다"}, {id:"c2", text:"눈이 높다"}, {id:"c3", text:"귀가 솔깃하다"}], answer:"c1" }, feedback: { correct: "마지막 복습까지 완벽해요!", incorrect: "경청하는 태도는 '귀를 기울이다'입니다." } }
+            ]
+        },
+        // BOSS: 총정리
+        {
+            id: "BOSS", title: "VS 안개마왕",
+            type: "boss_raid",
+            blocks: [
+                {
+                    type: "boss_battle",
+                    boss: { name: "흐릿흐릿 안개마왕", image: "😈", max_hp: 100, time_per_turn: 7 },
+                    questions: [
+                        { q: "'귀가 얇다'는 귀가 얇아서 잘 찢어진다는 뜻이지!", type: "ox", a: "false", options: ["맞아", "아니야! (공격)"] },
+                        { q: "'귀가 솔깃하다'의 뜻은?", type: "mcq", a: "흥미가 생기다", options: ["흥미가 생기다", "귀가 아프다", "소리가 작다"] },
+                        { q: "이모지 힌트! [ 👀 + 🏔️ ]", type: "mcq", a: "눈이 높다", options: ["눈이 높다", "눈이 맵다", "눈에 띄다"] },
+                        { q: "비밀을 잘 지키는 사람은?", type: "mcq", a: "입이 무겁다", options: ["입이 무겁다", "귀를 기울이다", "눈에 띄다"] },
+                        { q: "빈칸 채우기: [ ( ? )를 기울이다 ]", type: "mcq", a: "귀", options: ["귀", "눈", "손"] },
+                        { q: "다음 중 '잘 보인다'는 뜻은?", type: "mcq", a: "눈에 띄다", options: ["눈에 띄다", "귀가 얇다", "눈이 높다"] }
+                    ]
+                }
+            ]
         }
-      ]
-    };
-
-    const rawIdioms = [
-        {q:"손이 빠르다", m:"일을 빨리하다", ex:"언니는 손이 빨라서 숙제를 금방 끝내요."},
-        {q:"발이 넓다", m:"아는 사람이 많다", ex:"형은 발이 넓어서 아는 사람이 많아요."},
-        {q:"발 벗고 나서다", m:"적극적으로 돕다", ex:"친구를 위해 발 벗고 나섰어요."},
-        {q:"손을 내밀다", m:"도움을 청하다", ex:"어려울 때 손을 내밀었어요."},
-        {q:"간이 콩알만 해지다", m:"매우 무섭다", ex:"발표 차례가 되자 간이 콩알만 해졌어요."},
-        {q:"가슴이 철렁하다", m:"깜짝 놀라다", ex:"이름이 불려서 가슴이 철렁했어요."},
-        {q:"입이 딱 벌어지다", m:"매우 놀라다", ex:"마술을 보고 입이 딱 벌어졌어요."},
-        {q:"손에 땀을 쥐다", m:"매우 긴장되다", ex:"경기는 손에 땀을 쥐게 했어요."},
-        {q:"머리를 맞대다", m:"함께 생각하다", ex:"다 같이 머리를 맞대고 고민했어요."},
-        {q:"눈이 높다", m:"기준이 까다롭다", ex:"지수는 눈이 높아서 물건을 잘 골라요."},
-        {q:"눈코 뜰 새 없다", m:"매우 바쁘다", ex:"요즘 눈코 뜰 새 없이 바빠요."},
-        {q:"어깨가 무겁다", m:"책임이 크다", ex:"대표가 되어 어깨가 무거워요."}
     ];
 
-    const LEVEL_THEMES = [
-        { title: "Level 1: 눈·귀 탐험", color: "bg-green-500", shadow: "shadow-green-700" },
-        { title: "Level 2: 입의 비밀", color: "bg-orange-500", shadow: "shadow-orange-700" },
-        { title: "Level 3: 손·발 대장", color: "bg-blue-500", shadow: "shadow-blue-700" },
-        { title: "Level 4: 두근두근 마음", color: "bg-pink-500", shadow: "shadow-pink-700" },
-        { title: "Level 5: 척척박사 사회", color: "bg-purple-500", shadow: "shadow-purple-700" }
-    ];
-
-    let gameData = { xp: 0, hearts: 5, maxHearts: 5, completedLessons: [], levels: [] };
-    
-    // Time Attack State
-    let isTimeAttackMode = false;
-    let taTimeLeft = 60;
-    let taCombo = 0;
-    let taTimerInterval = null;
-    let taQuestions = [];
-    let taCurrentQIndex = 0;
-    let taTotalQ = 10;
-
+    /**
+     * STATE MANAGEMENT
+     */
+    let gameData = { xp: 50, hearts: 5, maxHearts: 5, completedLessons: [] }; 
     let currentLesson = null;
     let currentBlockIndex = 0;
-
-    // INTRO LOGIC
-    function startExploration() {
-        const intro = document.getElementById('introView');
-        intro.classList.add('open');
-        
-        // Remove after animation to allow interaction with map underneath
-        setTimeout(() => {
-            intro.style.display = 'none';
-        }, 1200);
-    }
+    let bossInterval = null;
 
     // --- INIT ---
-    function initGame() {
-        const saved = localStorage.getItem('idiomGameSave_v5');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            gameData.xp = parsed.xp || 0;
-            gameData.hearts = parsed.hearts || 5;
-            gameData.completedLessons = parsed.completedLessons || [];
-        }
-
-        const level1 = { id: "W01", title: week1Json.title, lessons: [...week1Json.lessons] };
-        const level2 = { id: "W02", title: week2Json.title, lessons: [...week2Json.lessons] };
-        const otherLevels = [];
+    function startApp() {
+        Sound.play('pop');
+        const intro = document.getElementById('introView');
+        intro.classList.add('open');
+        setTimeout(() => { intro.style.display = 'none'; }, 1000);
         
-        for(let i=0; i<3; i++) {
-            const levelIdx = i + 3;
-            const startIdx = i * 4;
-            const idioms = rawIdioms.slice(startIdx, startIdx + 4);
-            const lessons = idioms.map((idiom, idx) => ({
-                lesson_id: `W0${levelIdx}-L0${idx+1}`,
-                title: idiom.q,
-                blocks: generateBlocksForIdiom(idiom)
-            }));
-            otherLevels.push({ id: `W0${levelIdx}`, title: LEVEL_THEMES[levelIdx-1].title, lessons: lessons });
-        }
-
-        gameData.levels = [level1, level2, ...otherLevels];
-        
-        // Add Checkpoint (Time Attack) to each level
-        gameData.levels.forEach(lvl => {
-            lvl.lessons.push({
-                lesson_id: `${lvl.id}-Checkpoint`,
-                title: "타임어택",
-                type: 'checkpoint'
-            });
-        });
-
-        updateTopBar();
+        loadGame();
         renderMap();
     }
 
-    // Auto-generate multiple blocks for levels 3-5 (Reverted to full suite, without writing)
-    function generateBlocksForIdiom(idiom) {
-        return [
-            // 1. Context Scene
-            {
-                type: "context_scene",
-                prompt: { text: idiom.ex.replace(idiom.q, "______"), media: "🤔" },
-                interaction: { mode: "tap_to_continue" }
-            },
-            // 2. MCQ
-            {
-                type: "mcq",
-                prompt: { text: `'${idiom.q}'의 뜻은?` },
-                interaction: {
-                    choices: [
-                        { id: "c1", text: idiom.m },
-                        { id: "c2", text: "반대되는 뜻" },
-                        { id: "c3", text: "다른 뜻" }
-                    ].sort(()=>Math.random()-0.5),
-                    correct_choice_ids: ["c1"]
-                },
-                feedback: { correct: "정답!", incorrect: `정답: ${idiom.m}` }
-            },
-            // 3. Sentence Builder
-            {
-                type: "sentence_builder",
-                prompt: { text: "문장을 올바르게 배열하세요." },
-                interaction: {
-                    tokens: idiom.ex.split(" ").sort(()=>Math.random()-0.5),
-                    correct_sequence: idiom.ex.split(" ")
-                },
-                feedback: { correct: "완벽해요!", incorrect: "순서를 확인하세요." }
-            }
-        ];
+    function loadGame() {
+        const saved = localStorage.getItem('idiomLevel1_v4');
+        if (saved) {
+            const p = JSON.parse(saved);
+            gameData = p;
+        }
+        updateTopBar();
     }
 
     function saveGame() {
-        localStorage.setItem('idiomGameSave_v5', JSON.stringify({
-            xp: gameData.xp, hearts: gameData.hearts, completedLessons: gameData.completedLessons
-        }));
+        localStorage.setItem('idiomLevel1_v4', JSON.stringify(gameData));
         updateTopBar();
     }
-    
+
     function updateTopBar() {
         document.getElementById('heartsDisplay').innerText = gameData.hearts;
         document.getElementById('xpDisplay').innerText = gameData.xp;
+        document.getElementById('gameHearts').innerText = gameData.hearts;
     }
 
-    // --- MAP ---
+    /**
+     * MAP RENDERER
+     */
     function renderMap() {
         const container = document.getElementById('levelsContainer');
         container.innerHTML = '';
-        gameData.levels.forEach((level, lIdx) => {
-            const header = document.createElement('div');
-            header.className = "w-full max-w-xs text-center mb-6 mt-4 relative";
-            header.innerHTML = `<div class="inline-block px-5 py-2 rounded-2xl text-white font-bold text-lg shadow-md ${LEVEL_THEMES[lIdx].color}">${level.title}</div>`;
-            container.appendChild(header);
 
-            level.lessons.forEach((lesson, sIdx) => {
-                const isCompleted = gameData.completedLessons.includes(lesson.lesson_id);
-                let isLocked = true;
-                
-                // Logic to unlock lessons
-                if (lIdx === 0 && sIdx === 0) isLocked = false;
-                else {
-                    if(sIdx > 0) {
-                        const prevId = level.lessons[sIdx-1].lesson_id;
-                        if(gameData.completedLessons.includes(prevId)) isLocked = false;
-                    } else if (lIdx > 0) {
-                        const prevLevel = gameData.levels[lIdx-1];
-                        const lastLessonOfPrev = prevLevel.lessons[prevLevel.lessons.length-1].lesson_id;
-                        if(gameData.completedLessons.includes(lastLessonOfPrev)) isLocked = false;
-                    }
+        LEVEL_1_DATA.forEach((lesson, idx) => {
+            let isLocked = true;
+            if (idx === 0) isLocked = false;
+            else if (gameData.completedLessons.includes(LEVEL_1_DATA[idx-1].id)) isLocked = false;
+            
+            const isCompleted = gameData.completedLessons.includes(lesson.id);
+            const isBoss = lesson.type === 'boss_raid';
+
+            let justify = 'justify-center';
+            if (!isBoss) justify = (idx % 2 === 0) ? 'justify-start pl-12' : 'justify-end pr-12';
+
+            const row = document.createElement('div');
+            row.className = `w-full max-w-xs flex ${justify}`;
+
+            const btn = document.createElement('div');
+            
+            if (isBoss) {
+                btn.className = `stage-btn btn-3d cursor-pointer border-4 border-white ${isLocked ? 'locked' : (isCompleted ? 'bg-yellow-500' : 'bg-purple-600 text-white animate-bounce')}`;
+                btn.innerHTML = '☠️';
+                if (!isLocked && !isCompleted) {
+                    const bossTag = document.createElement('div');
+                    bossTag.className="absolute -top-6 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse";
+                    bossTag.innerText="BOSS";
+                    btn.appendChild(bossTag);
                 }
+            } else {
+                btn.className = `stage-btn btn-3d cursor-pointer ${isLocked ? 'locked' : (isCompleted ? 'bg-yellow-400 text-white' : 'bg-green-500 text-white')}`;
+                btn.innerHTML = isCompleted ? '⭐' : (isLocked ? '🔒' : (idx + 1));
+            }
 
-                let align = 'justify-center';
-                if (lesson.type !== 'checkpoint') {
-                    if (sIdx % 2 !== 0) align = (sIdx % 4 === 1) ? 'justify-start pl-12' : 'justify-end pr-12';
-                }
+            const label = document.createElement('div');
+            label.className = "absolute -bottom-8 w-32 text-center text-sm font-bold text-gray-600 bg-white/80 rounded-md py-1 backdrop-blur-sm pointer-events-none";
+            label.innerText = lesson.title;
+            btn.appendChild(label);
 
-                const row = document.createElement('div');
-                row.className = `w-full max-w-xs flex ${align} mb-6`;
-                
-                const btn = document.createElement('div');
-                let statusClass = isLocked ? 'locked' : (isCompleted ? 'completed' : 'current');
-                
-                // Styles
-                if (lesson.type === 'checkpoint') {
-                    btn.className = `stage-btn checkpoint cursor-pointer ${statusClass}`;
-                    if(!isLocked) {
-                        btn.classList.add(isCompleted ? 'bg-yellow-500' : 'bg-red-500');
-                    }
-                    btn.innerHTML = '🏆';
-                } else {
-                    btn.className = `stage-btn cursor-pointer ${statusClass}`;
-                    if(!isLocked) {
-                        const colorHex = getTailwindColor(LEVEL_THEMES[lIdx].color);
-                        btn.style.backgroundColor = isCompleted ? '#fbbf24' : colorHex;
-                    }
-                    btn.innerHTML = isCompleted ? '⭐' : (isLocked ? '🔒' : '★');
-                }
+            if (!isLocked) {
+                btn.onclick = () => { Sound.play('pop'); startLesson(lesson); };
+            }
 
-                const label = document.createElement('div');
-                label.className = "absolute -bottom-8 w-32 text-center text-sm font-bold text-gray-600 bg-white/80 rounded-md py-1 backdrop-blur-sm pointer-events-none";
-                label.innerText = lesson.title;
-                btn.appendChild(label);
-
-                if(!isLocked) {
-                    btn.onclick = () => startLesson(level, lesson, lIdx);
-                }
-                row.appendChild(btn);
-                container.appendChild(row);
-            });
+            row.appendChild(btn);
+            container.appendChild(row);
         });
     }
 
-    function getTailwindColor(cls) {
-        if(cls.includes('green')) return '#22c55e';
-        if(cls.includes('blue')) return '#3b82f6';
-        if(cls.includes('pink')) return '#ec4899';
-        if(cls.includes('purple')) return '#a855f7';
-        if(cls.includes('orange')) return '#f97316';
-        return '#58cc02';
-    }
+    /**
+     * GAME ENGINE
+     */
+    function startLesson(lesson) {
+        if (gameData.hearts <= 0) { alert("하트가 부족해요! (자정 충전)"); return; }
+        
+        currentLesson = lesson;
+        currentBlockIndex = 0;
 
-    // --- GAME ENGINE ---
-    function startLesson(level, lesson, levelIndex) {
-        if (lesson.type === 'checkpoint') {
-            initTimeAttack(level, lesson);
-        } else {
-            if(gameData.hearts <= 0) { alert("하트 부족!"); return; }
-            startNormalLesson(level, lesson);
-        }
+        document.getElementById('mapView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+        document.getElementById('quizProgress').style.width = '0%';
+        
+        renderCurrentBlock();
     }
 
     function exitGame() {
-        stopTimer();
+        if (bossInterval) clearInterval(bossInterval);
         document.getElementById('gameView').classList.add('hidden');
         document.getElementById('mapView').classList.remove('hidden');
         renderMap();
     }
 
-    // --- NORMAL MODE ---
-    function startNormalLesson(level, lesson) {
-        isTimeAttackMode = false;
-        currentLesson = lesson;
-        currentBlockIndex = 0;
-        
-        // UI Setup
-        document.getElementById('quizProgress').classList.remove('hidden');
-        document.getElementById('quizProgress').style.width = '0%';
-        document.getElementById('timerBar').classList.add('hidden');
-        document.getElementById('headerRightIcon').innerText = '❤️';
-        document.getElementById('gameHearts').innerText = gameData.hearts;
-        
-        document.getElementById('mapView').classList.add('hidden');
-        document.getElementById('gameView').classList.remove('hidden');
-
-        renderCurrentBlock();
-    }
-
     function renderCurrentBlock() {
-        let block = currentLesson.blocks[currentBlockIndex];
-        if (block.type === 'produce') block = block.variants.HIGH || block.variants.MID;
-
-        setupBlockUI(block);
-        const container = document.getElementById('blockContainer');
-        const i = block.interaction;
-
-        // Render Interaction
-        if (block.type === 'context_scene') {
-            enableMainBtn("알겠어요!", () => nextBlock());
-        } else if (block.type === 'mcq') {
-            renderMCQ(container, i.choices, (id) => checkAnswer(id, i.correct_choice_ids, block));
-        } else if (block.type === 'true_false') {
-            renderTF(container, (id) => checkAnswer(id, i.correct_choice_ids, block));
-        } else if (block.type === 'match') {
-            renderMatch(container, i.pairs, (res) => handleMatchResult(res, block));
-        } else if (block.type === 'cloze') {
-            renderMCQ(container, i.choices, (id) => checkAnswer(id, i.correct_choice_ids, block));
-        } else if (block.type === 'sentence_builder') {
-            renderSB(container, i.tokens, (seq) => checkSentence(seq, i.correct_sequence, block));
-        }
-        
-        // Update Progress
-        const p = ((currentBlockIndex) / currentLesson.blocks.length) * 100;
-        document.getElementById('quizProgress').style.width = `${p}%`;
-    }
-
-    // --- TIME ATTACK MODE ---
-    function initTimeAttack(level, lesson) {
-        isTimeAttackMode = true;
-        currentLesson = lesson;
-        taTimeLeft = 60;
-        taCombo = 0;
-        taCurrentQIndex = 0;
-        
-        // Generate Question Pool
-        let pool = REVIEW_DATA[level.id];
-        if (!pool) {
-            // Use Raw Idioms for L3-5, shuffle and pick 10
-            let startIdx = (parseInt(level.id.substring(1)) - 3) * 4;
-            pool = rawIdioms.slice(startIdx, startIdx+4); 
-            // Expand pool with distractors logic if needed, but for now reuse simple
-        }
-        
-        // Generate 10 simple MCQ questions
-        taQuestions = [];
-        for(let i=0; i<taTotalQ; i++) {
-            let item = pool[i % pool.length]; // Cycle through pool
-            taQuestions.push({
-                item: item,
-                choices: [
-                    item.m,
-                    "전혀 다른 뜻입니다", 
-                    "반대되는 뜻입니다" 
-                ].sort(() => Math.random() - 0.5)
-            });
-        }
-
-        // UI Setup
-        document.getElementById('mapView').classList.add('hidden');
-        document.getElementById('gameView').classList.remove('hidden');
-        
-        document.getElementById('quizProgress').classList.add('hidden');
-        document.getElementById('timerBar').classList.remove('hidden');
-        document.getElementById('timerBar').style.width = '100%';
-        document.getElementById('headerRightIcon').innerText = '🔥'; // Combo Icon
-        document.getElementById('gameHearts').innerText = '0'; // Combo Count
-
-        startTimer();
-        renderTimeAttackQuestion();
-    }
-
-    function startTimer() {
-        if(taTimerInterval) clearInterval(taTimerInterval);
-        taTimerInterval = setInterval(() => {
-            taTimeLeft--;
-            const width = (taTimeLeft / 60) * 100;
-            const bar = document.getElementById('timerBar');
-            bar.style.width = `${width}%`;
-            
-            if(taTimeLeft <= 10) bar.classList.replace('bg-green-500', 'bg-red-500'); // Panic color
-            else bar.classList.replace('bg-red-500', 'bg-red-500'); // Default Red per requirement? Ah, let's make it Green -> Red
-
-            if (taTimeLeft <= 0) {
-                failTimeAttack();
-            }
-        }, 1000);
-    }
-
-    function stopTimer() {
-        if(taTimerInterval) clearInterval(taTimerInterval);
-    }
-
-    function renderTimeAttackQuestion() {
-        const qData = taQuestions[taCurrentQIndex];
-        const container = document.getElementById('blockContainer');
-        const feedbackSec = document.getElementById('feedbackSection');
-        feedbackSec.classList.add('hidden'); // Hide feedback in TA mode for speed
-        
-        document.getElementById('gameHearts').innerText = taCombo; // Show Combo
-
-        container.innerHTML = '';
-        const title = document.createElement('h2');
-        title.className = "text-2xl font-bold text-gray-700 mb-8 text-center";
-        title.innerText = `'${qData.item.q}'의 뜻은?`;
-        container.appendChild(title);
-
-        const grid = document.createElement('div');
-        grid.className = "grid grid-cols-1 gap-3 w-full max-w-sm";
-        
-        qData.choices.forEach(txt => {
-            const btn = document.createElement('button');
-            btn.className = "w-full border-2 border-gray-200 bg-white hover:bg-gray-50 py-4 rounded-xl text-lg font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
-            btn.innerText = txt;
-            btn.onclick = () => checkTimeAttackAnswer(txt === qData.item.m);
-            grid.appendChild(btn);
-        });
-        container.appendChild(grid);
-        
-        // Hide Main Action Button in Time Attack (Rapid Fire)
-        document.getElementById('actionArea').classList.add('hidden');
-    }
-
-    function checkTimeAttackAnswer(isCorrect) {
-        if(isCorrect) {
-            // Bonus Time
-            let bonus = 3;
-            if(taCombo >= 2) bonus += 1; 
-            if(taCombo >= 5) bonus += 2;
-            
-            taTimeLeft = Math.min(60, taTimeLeft + bonus);
-            taCombo++;
-            
-            // Visual Effect
-            showComboEffect(bonus);
-        } else {
-            // Penalty
-            taTimeLeft -= 5;
-            taCombo = 0;
-            shakeScreen();
-        }
-
-        document.getElementById('gameHearts').innerText = taCombo;
-
-        // Next
-        taCurrentQIndex++;
-        if(taCurrentQIndex >= taTotalQ) {
-            winTimeAttack();
-        } else {
-            renderTimeAttackQuestion();
-        }
-    }
-
-    function showComboEffect(bonus) {
-        const overlay = document.getElementById('comboOverlay');
-        const text = document.getElementById('comboText');
-        const sub = document.getElementById('timeBonusText');
-        
-        if(taCombo > 1) {
-            text.innerText = `Combo x${taCombo}!`;
-            sub.innerText = `+${bonus}초`;
-            overlay.classList.remove('hidden');
-            
-            // Re-trigger animation
-            overlay.classList.remove('combo-effect');
-            void overlay.offsetWidth; // reflow
-            overlay.classList.add('combo-effect');
-            
-            setTimeout(() => overlay.classList.add('hidden'), 800);
-        }
-    }
-
-    function shakeScreen() {
-        const view = document.getElementById('gameView');
-        view.classList.add('animate-shake');
-        setTimeout(() => view.classList.remove('animate-shake'), 500);
-    }
-
-    function winTimeAttack() {
-        stopTimer();
-        document.getElementById('actionArea').classList.remove('hidden');
-        finishLesson(true);
-    }
-
-    function failTimeAttack() {
-        stopTimer();
-        document.getElementById('failModal').classList.remove('hidden');
-    }
-
-    function retryTimeAttack() {
-        document.getElementById('failModal').classList.add('hidden');
-        initTimeAttack(currentLesson.levelObj, currentLesson); // Need level ref hack or pass it better
-        // For simplicity, re-call startLesson logic by reloading map logic? 
-        // Just re-init:
-        // We need 'level' object. 
-        // Quick fix: store level in currentLesson when starting
-        startLesson(currentLesson.levelObj, currentLesson); 
-    }
-
-    // --- COMMON HELPERS ---
-    
-    function setupBlockUI(block) {
+        const block = currentLesson.blocks[currentBlockIndex];
         const container = document.getElementById('blockContainer');
         const actionArea = document.getElementById('actionArea');
-        const mainBtn = document.getElementById('mainActionBtn');
         const feedbackSec = document.getElementById('feedbackSection');
+        const mainBtn = document.getElementById('mainActionBtn');
 
         container.innerHTML = '';
         feedbackSec.classList.add('hidden');
         actionArea.classList.remove('hidden');
-        
-        mainBtn.className = "w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.2)] bg-gray-300 pointer-events-none";
+        mainBtn.className = "btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-gray-300 pointer-events-none";
         mainBtn.innerText = "확인";
         mainBtn.onclick = null;
 
-        const title = document.createElement('h2');
-        title.className = "text-2xl font-bold text-gray-700 mb-6 text-center whitespace-pre-line";
-        title.innerText = block.prompt.text;
-        container.appendChild(title);
+        // Block Routing
+        if (block.type === 'concept_card') {
+            renderConceptCard(container, block);
+            actionArea.classList.add('hidden');
+        } else if (block.type === 'boss_battle') {
+            renderBossBattle(block);
+        } else if (block.type === 'match_game') {
+            renderMatchGame(container, block.interaction, (res) => processResult(res, block));
+            actionArea.classList.add('hidden'); // Game auto-completes
+        } else {
+            if(block.prompt) {
+                const title = document.createElement('h2');
+                title.className = "text-2xl font-bold text-gray-700 mb-6 text-center whitespace-pre-line";
+                title.innerText = block.prompt.text;
+                container.appendChild(title);
+            }
 
-        if(block.prompt.media) {
-            const m = document.createElement('div');
-            m.className = "text-6xl mb-8 animate-bounce";
-            m.innerText = block.prompt.media;
-            container.appendChild(m);
+            if (block.type === 'context_quiz') renderContextQuiz(container, block);
+            else if (block.type === 'chat_quiz') renderChatQuiz(container, block.interaction, (id) => checkAnswer(id, block.interaction.answer, block));
+            else if (block.type === 'emoji_detective') renderEmojiDetective(container, block.interaction, (seq) => checkSentence(seq, block));
+            else if (block.type === 'sentence_builder') renderSentenceBuilder(container, block.interaction, (seq) => checkSentence(seq, block));
         }
+
+        const p = ((currentBlockIndex) / currentLesson.blocks.length) * 100;
+        document.getElementById('quizProgress').style.width = `${p}%`;
     }
 
-    function enableMainBtn(text, cb) {
-        const btn = document.getElementById('mainActionBtn');
-        btn.innerText = text || "확인";
-        btn.className = "w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_#15803d] bg-green-500 hover:bg-green-600 cursor-pointer";
-        btn.onclick = cb;
-        btn.style.pointerEvents = "auto";
+    /**
+     * BLOCK RENDERERS
+     */
+    function renderConceptCard(container, block) {
+        container.innerHTML = `
+            <div class="w-full h-full flex flex-col items-center justify-center animate-pop cursor-pointer" onclick="Sound.play('pop'); nextBlock()">
+                <div class="text-8xl mb-6 animate-float">${block.concept.media}</div>
+                <h2 class="text-4xl font-black text-gray-800 mb-4 font-hand">${block.concept.word}</h2>
+                <div class="bg-yellow-100 p-6 rounded-2xl border-4 border-yellow-300 text-center shadow-lg w-full max-w-sm">
+                    <p class="text-2xl font-bold text-yellow-800 break-keep">${block.concept.meaning}</p>
+                </div>
+                <p class="mt-8 text-gray-400 font-bold animate-pulse">화면을 터치해서 시작하기 ▶</p>
+            </div>
+        `;
     }
 
-    function renderMCQ(container, choices, cb) {
-        const grid = document.createElement('div'); grid.className = "grid grid-cols-1 gap-3 w-full max-w-sm";
-        choices.forEach(c => {
+    function renderMatchGame(container, interaction, cb) {
+        const items = [];
+        interaction.pairs.forEach((p, i) => {
+            items.push({ id: i, text: p.word, type: 'L' });
+            items.push({ id: i, text: p.mean, type: 'R' });
+        });
+        items.sort(() => Math.random() - 0.5);
+
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-2 gap-4 w-full";
+        
+        let selected = null;
+        let matchedCount = 0;
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "match-card h-24 bg-white border-2 border-gray-200 rounded-xl flex items-center justify-center text-center font-bold text-gray-700 cursor-pointer shadow-sm p-2 text-sm";
+            card.innerText = item.text;
+            
+            card.onclick = () => {
+                if(card.classList.contains('matched') || card === selected) return;
+                Sound.play('pop');
+
+                if(!selected) {
+                    selected = card;
+                    card.classList.add('selected');
+                } else {
+                    const selItem = items.find(i => i.text === selected.innerText);
+                    if(item.id === selItem.id && item.type !== selItem.type) {
+                        // Match!
+                        Sound.play('correct');
+                        card.classList.add('matched');
+                        selected.classList.remove('selected');
+                        selected.classList.add('matched');
+                        selected = null;
+                        matchedCount++;
+                        if(matchedCount === interaction.pairs.length) {
+                            setTimeout(() => cb(true), 500);
+                        }
+                    } else {
+                        // Fail
+                        Sound.play('wrong');
+                        card.classList.add('bg-red-100', 'animate-shake');
+                        selected.classList.add('bg-red-100', 'animate-shake');
+                        const tempSel = selected;
+                        selected = null;
+                        setTimeout(() => {
+                            card.classList.remove('bg-red-100', 'animate-shake', 'selected');
+                            tempSel.classList.remove('bg-red-100', 'animate-shake', 'selected');
+                        }, 500);
+                    }
+                }
+            };
+            grid.appendChild(card);
+        });
+        container.appendChild(grid);
+    }
+
+    function renderContextQuiz(container, block) {
+        const ctxBox = document.createElement('div');
+        ctxBox.className = "w-full bg-blue-50 p-6 rounded-2xl mb-6 flex flex-col items-center border-2 border-blue-100 shadow-sm";
+        ctxBox.innerHTML = `<div class="text-6xl mb-4 animate-bounce">${block.context.media}</div><div class="text-lg text-gray-700 font-medium text-center break-keep">${block.context.text}</div>`;
+        container.appendChild(ctxBox);
+
+        const qTitle = document.createElement('h3');
+        qTitle.className = "text-lg font-bold text-gray-800 mb-4 text-center";
+        qTitle.innerText = block.quiz.prompt;
+        container.appendChild(qTitle);
+
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-1 gap-3 w-full";
+        block.quiz.choices.forEach(c => {
             const btn = document.createElement('button');
-            btn.className = "option-btn w-full border-2 border-gray-200 bg-white hover:bg-gray-50 py-4 rounded-xl text-lg font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
+            btn.className = "choice-btn w-full border-2 border-gray-200 bg-white hover:bg-gray-50 py-4 rounded-xl text-lg font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
             btn.innerText = c.text;
             btn.onclick = () => {
-                document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('border-blue-500','bg-blue-50','text-blue-600'));
+                Sound.play('pop');
+                document.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('border-blue-500','bg-blue-50','text-blue-600'));
                 btn.classList.add('border-blue-500','bg-blue-50','text-blue-600');
-                enableMainBtn(null, () => cb(c.id));
+                enableMainBtn("정답 확인", () => checkAnswer(c.id, block.quiz.answer, block));
             };
             grid.appendChild(btn);
         });
         container.appendChild(grid);
     }
-    
-    function renderTF(container, cb) { 
-        const flex = document.createElement('div'); flex.className="flex space-x-4 w-full justify-center";
-        [{id:'t',t:'O'},{id:'f',t:'X'}].forEach(o=>{
-            const b = document.createElement('button'); b.innerText=o.t;
-            b.className="tf-btn w-32 h-32 rounded-2xl border-4 border-gray-200 text-6xl font-black text-gray-300 bg-white transition-all";
-            b.onclick=()=>{ 
-                document.querySelectorAll('.tf-btn').forEach(x=>x.classList.remove('border-blue-500'));
-                b.classList.add('border-blue-500'); enableMainBtn(null, ()=>cb(o.id));
-            };
-            flex.appendChild(b);
-        });
-        container.appendChild(flex);
-    }
-    
-    function renderMatch(container, pairs, cb) { 
-        const lefts = pairs.map(p => ({id: p.left, text: p.left, type:'L'})).sort(()=>Math.random()-0.5);
-        const rights = pairs.map(p => ({id: p.left, text: p.right, type:'R'})).sort(()=>Math.random()-0.5);
-        const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-4 w-full";
+
+    function renderChatQuiz(container, interaction, cb) {
+        Sound.play('chat');
+        const chatBox = document.createElement('div');
+        chatBox.className = "w-full bg-[#b2c7da] p-4 rounded-2xl mb-4 h-80 overflow-y-auto border-2 border-[#9bbbd4] flex flex-col space-y-4 shadow-inner";
         
-        let selected = null; let matched = 0;
-        const click = (el, item) => {
-            if(el.classList.contains('matched')) return;
-            if(selected && selected.el === el) { el.classList.remove('selected'); selected=null; return; }
-            if(selected) {
-                if(selected.item.type === item.type) { selected.el.classList.remove('selected'); selected={el,item}; el.classList.add('selected'); return; }
-                if(selected.item.id === item.id) {
-                    selected.el.classList.add('matched'); el.classList.add('matched'); selected.el.classList.remove('selected');
-                    matched++; if(matched===pairs.length) enableMainBtn(null, ()=>cb(true));
-                    selected=null;
-                } else {
-                    el.classList.add('bg-red-100'); selected.el.classList.add('bg-red-100');
-                    setTimeout(()=>{ el.classList.remove('bg-red-100'); document.querySelectorAll('.selected').forEach(x=>x.classList.remove('selected','bg-red-100')); selected=null; },500);
-                }
-            } else { selected={el,item}; el.classList.add('selected'); }
-        };
-
-        [lefts, rights].forEach(arr => {
-            const col = document.createElement('div'); col.className="flex flex-col gap-2";
-            arr.forEach(o => {
-                const b = document.createElement('div'); b.className="match-item"; b.innerText=o.text;
-                b.onclick=()=>click(b,o); col.appendChild(b);
-            });
-            grid.appendChild(col);
+        interaction.messages.forEach(msg => {
+            const row = document.createElement('div');
+            if (msg.is_me) {
+                row.className = "flex w-full justify-end items-end";
+                row.innerHTML = `<div class="chat-bubble-me bg-[#fef01b] text-sm p-3 rounded-lg max-w-[80%] shadow-sm relative mr-2 font-medium">${msg.text}</div>`;
+            } else {
+                row.className = "flex w-full justify-start items-start";
+                row.innerHTML = `<div class="flex flex-col items-center mr-2"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm border">${interaction.friend_avatar}</div><span class="text-xs text-gray-600 mt-1">${interaction.friend_name}</span></div>
+                                 <div class="chat-bubble-you bg-white text-sm p-3 rounded-lg max-w-[70%] shadow-sm mt-2 relative font-medium">${msg.text}</div>`;
+            }
+            chatBox.appendChild(row);
         });
-        container.appendChild(grid);
-    }
 
-    function renderSB(container, tokens, cb) {
-        const ans = document.createElement('div'); ans.className="w-full min-h-[60px] border-b-2 border-gray-300 mb-8 flex flex-wrap gap-2 justify-center pb-2";
-        const pool = document.createElement('div'); pool.className="flex flex-wrap gap-2 justify-center";
-        let seq = [];
-        tokens.forEach(t => {
-            const b = document.createElement('button'); b.className="word-token"; b.innerText=t;
-            b.onclick=()=>{
-                if(b.parentElement===pool) { ans.appendChild(b); seq.push(t); }
-                else { pool.appendChild(b); seq = seq.filter(x=>x!==t); }
-                if(seq.length>0) enableMainBtn(null, ()=>cb(seq)); else disableMainBtn();
+        const emptyRow = document.createElement('div');
+        emptyRow.className = "flex w-full justify-end items-end";
+        emptyRow.innerHTML = `<div id="chatPlaceholder" class="chat-bubble-me bg-[#fef01b] opacity-50 text-sm p-3 rounded-lg min-w-[100px] text-center text-gray-500 font-bold border-2 border-dashed border-gray-400 mr-2">?</div>`;
+        chatBox.appendChild(emptyRow);
+        container.appendChild(chatBox);
+        setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 100);
+
+        const optDiv = document.createElement('div');
+        optDiv.className = "w-full grid grid-cols-1 gap-2";
+        interaction.choices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = "chat-opt w-full bg-white border-2 border-gray-200 py-3 rounded-xl text-gray-700 font-bold hover:bg-yellow-50 active:scale-95 transition-all shadow-sm";
+            btn.innerText = c.text;
+            btn.onclick = () => {
+                Sound.play('pop');
+                document.querySelectorAll('.chat-opt').forEach(b => b.classList.remove('bg-yellow-100', 'border-yellow-400'));
+                btn.classList.add('bg-yellow-100', 'border-yellow-400');
+                
+                const ph = document.getElementById('chatPlaceholder');
+                ph.innerText = c.text;
+                ph.classList.remove('opacity-50', 'border-dashed', 'text-gray-500');
+                ph.classList.add('text-black');
+                chatBox.scrollTop = chatBox.scrollHeight;
+                
+                enableMainBtn("전송하기 ➤", () => cb(c.id));
             };
-            pool.appendChild(b);
+            optDiv.appendChild(btn);
         });
-        container.appendChild(ans); container.appendChild(pool);
+        container.appendChild(optDiv);
     }
 
-    function renderWriting(container, ph, cb) {
-        const t = document.createElement('textarea'); t.className="w-full h-32 p-4 border-2 border-gray-300 rounded-xl text-lg font-hand";
-        t.placeholder=ph;
-        t.oninput=(e)=>{ if(e.target.value.length>5) enableMainBtn(null, ()=>cb(e.target.value)); else disableMainBtn(); };
-        container.appendChild(t);
-    }
+    function renderEmojiDetective(container, interaction, cb) {
+        const hintWrap = document.createElement('div');
+        hintWrap.className = "w-full flex justify-end mb-2";
+        const hintBtn = document.createElement('button');
+        hintBtn.className = "hint-btn btn-3d px-3 py-1 rounded-full text-sm font-bold shadow-md flex items-center";
+        hintBtn.innerHTML = "💡 힌트 (-10 XP)";
+        hintBtn.onclick = () => {
+             if(gameData.xp >= 10) {
+                 gameData.xp -= 10; updateTopBar(); Sound.play('pop');
+                 alert(`첫 번째 글자는 '${interaction.correct_sequence[0]}' 입니다!`);
+                 hintBtn.disabled = true; hintBtn.classList.add('opacity-50');
+             } else {
+                 alert("XP가 부족해요!");
+             }
+        };
+        hintWrap.appendChild(hintBtn);
+        container.appendChild(hintWrap);
 
-    function disableMainBtn() { 
-        const b=document.getElementById('mainActionBtn'); b.className="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-none bg-gray-300 pointer-events-none"; b.onclick=null; 
-    }
+        const clueBox = document.createElement('div');
+        clueBox.className = "flex flex-wrap justify-center items-center gap-2 mb-8";
+        interaction.clues.forEach((clue, idx) => {
+            if(clue === "➕") {
+                const plus = document.createElement('div'); plus.className="text-gray-400 font-bold"; plus.innerText="+"; clueBox.appendChild(plus);
+            } else {
+                const card = document.createElement('div');
+                card.className = "w-16 h-20 bg-white border-4 border-purple-100 rounded-xl flex items-center justify-center text-4xl shadow-md animate-pop";
+                card.style.animationDelay = `${idx * 0.1}s`;
+                card.innerText = clue;
+                clueBox.appendChild(card);
+            }
+        });
+        container.appendChild(clueBox);
 
-    // --- CHECK LOGIC ---
-    function checkAnswer(id, correctIds, block) { processResult(correctIds.includes(id), block); }
-    function checkSentence(seq, correctSeq, block) { processResult(JSON.stringify(seq)===JSON.stringify(correctSeq), block); }
-    function checkWriting(txt, block) { 
-        let ok=false; block.grading.must_include.forEach(k=>{ if(txt.replace(/\s/g,'').includes(k.replace(/\s/g,''))) ok=true; });
-        processResult(ok, block);
-    }
-    function handleMatchResult(ok, block) { processResult(ok, block); }
+        let currentInput = [];
+        const answerLen = interaction.correct_sequence.length;
 
-    function processResult(isCorrect, block) {
-        const fb = isCorrect ? block.feedback.correct : block.feedback.incorrect;
-        showFeedback(isCorrect, fb);
-        const btn = document.getElementById('mainActionBtn');
-        if(isCorrect) { btn.innerText="계속하기"; btn.onclick=()=>nextBlock(); }
-        else {
-            gameData.hearts--; document.getElementById('gameHearts').innerText=gameData.hearts; saveGame();
-            if(gameData.hearts<=0) { alert("하트 부족!"); exitGame(); }
-            btn.innerText="계속하기"; btn.className="w-full py-4 rounded-2xl text-xl font-bold text-white shadow-[0_4px_0_#991b1b] bg-red-500 hover:bg-red-600"; btn.onclick=()=>nextBlock();
+        const disp = document.createElement('div');
+        disp.className = "flex justify-center space-x-2 mb-8 min-h-[4rem]";
+        const updateDisp = () => {
+            disp.innerHTML = '';
+            for(let i=0; i<answerLen; i++) {
+                const box = document.createElement('div');
+                const isFilled = currentInput[i] !== undefined;
+                box.className = `min-w-[80px] px-3 h-14 border-b-4 flex items-center justify-center text-xl font-bold transition-all cursor-pointer whitespace-nowrap 
+                    ${isFilled ? 'border-purple-500 text-purple-600 bg-purple-50 rounded-t-lg animate-pop' : 'border-gray-300 text-gray-300'}`;
+                box.innerText = currentInput[i] || "";
+                box.onclick = () => { if(isFilled){ currentInput.splice(i,1); updateDisp(); check(); Sound.play('pop'); } };
+                disp.appendChild(box);
+            }
+        };
+        container.appendChild(disp);
+        updateDisp();
+
+        const pool = document.createElement('div');
+        pool.className = "flex flex-wrap justify-center gap-3";
+        const shuffled = [...interaction.pool].sort(() => Math.random() - 0.5);
+        shuffled.forEach(token => {
+            const chip = document.createElement('button');
+            chip.className = "px-4 py-2 bg-white border-2 border-gray-200 rounded-xl text-lg font-bold text-gray-700 shadow-[0_4px_0_#e5e7eb] active:shadow-none active:translate-y-1 transition-all hover:bg-gray-50";
+            chip.innerText = token;
+            chip.onclick = () => {
+                Sound.play('pop');
+                if(currentInput.length < answerLen) {
+                    currentInput.push(token);
+                    updateDisp();
+                    check();
+                }
+            };
+            pool.appendChild(chip);
+        });
+        container.appendChild(pool);
+
+        function check() {
+            if(currentInput.length === answerLen) enableMainBtn("정답 확인 🔍", () => cb(currentInput));
+            else disableMainBtn();
         }
     }
 
-    function showFeedback(isCorrect, text) {
-        const sec=document.getElementById('feedbackSection'); sec.classList.remove('hidden');
-        document.getElementById('feedbackText').innerText = text;
-        document.getElementById('feedbackTitle').innerText = isCorrect ? "정답! 🎉" : "아쉬워요!";
-        document.getElementById('feedbackIcon').innerText = isCorrect ? "✅" : "❌";
-        sec.className = `mb-4 p-4 rounded-xl flex items-start space-x-3 animate-slide-in ${isCorrect?'bg-green-100 text-green-800':'bg-red-100 text-red-800'}`;
+    function renderSentenceBuilder(container, interaction, cb) {
+        const ansArea = document.createElement('div');
+        ansArea.className="w-full min-h-[80px] border-b-2 border-gray-300 mb-8 flex flex-wrap gap-2 justify-center pb-4 pt-4";
+        const poolArea = document.createElement('div');
+        poolArea.className="flex flex-wrap gap-2 justify-center";
+        
+        let seq = [];
+        const update = () => {
+            if(seq.length > 0) enableMainBtn("완성!", () => cb(seq));
+            else disableMainBtn();
+        }
+
+        const shuffledTokens = [...interaction.tokens].sort(() => Math.random() - 0.5);
+        shuffledTokens.forEach(t => {
+            const b = document.createElement('button');
+            b.className="bg-white border-2 border-gray-200 rounded-xl px-4 py-2 font-bold text-gray-700 shadow-sm active:translate-y-1 transition-all";
+            b.innerText=t;
+            b.onclick=()=>{
+                Sound.play('pop');
+                if(b.parentElement === poolArea) {
+                    ansArea.appendChild(b);
+                    seq.push(t);
+                    b.classList.add('border-blue-400', 'text-blue-600', 'bg-blue-50');
+                } else {
+                    poolArea.appendChild(b);
+                    seq = seq.filter(x=>x!==t);
+                    b.classList.remove('border-blue-400', 'text-blue-600', 'bg-blue-50');
+                }
+                update();
+            };
+            poolArea.appendChild(b);
+        });
+        container.appendChild(ansArea);
+        container.appendChild(poolArea);
+    }
+
+    function renderBossBattle(block) {
+        const container = document.getElementById('blockContainer');
+        const actionArea = document.getElementById('actionArea');
+        actionArea.classList.add('hidden'); 
+
+        let currentQIdx = 0;
+        let currentHP = block.boss.max_hp;
+        const damagePerHit = block.boss.max_hp / block.questions.length;
+        let timeLeft = block.boss.time_per_turn;
+
+        container.innerHTML = '';
+
+        const hintWrap = document.createElement('div');
+        hintWrap.className = "w-full flex justify-end mb-2 absolute top-2 right-4 z-10";
+        const hintBtn = document.createElement('button');
+        hintBtn.className = "hint-btn btn-3d px-3 py-1 rounded-full text-sm font-bold shadow-md flex items-center";
+        hintBtn.innerHTML = "💡 오답 지우기 (-10 XP)";
+        hintBtn.onclick = () => {
+             if(gameData.xp >= 10) {
+                 gameData.xp -= 10; updateTopBar(); Sound.play('pop');
+                 const btns = document.querySelectorAll('#bossOptions button');
+                 const q = block.questions[currentQIdx];
+                 let removed = false;
+                 btns.forEach(b => {
+                     if(removed) return;
+                     const txt = b.innerText;
+                     let isCorrect = (q.type === 'ox' && ((q.a==='false' && txt.includes('아니야')) || (q.a==='true' && txt.includes('맞아')))) || txt === q.a;
+                     if(!isCorrect) {
+                         b.style.opacity = '0.1'; b.disabled = true; removed = true;
+                     }
+                 });
+                 hintBtn.disabled = true; hintBtn.classList.add('opacity-50');
+             } else {
+                 alert("XP가 부족해요!");
+             }
+        };
+        container.appendChild(hintWrap);
+
+        const bossUI = document.createElement('div');
+        bossUI.className = "w-full flex flex-col items-center mb-4 relative";
+        bossUI.innerHTML = `
+            <div class="w-full bg-gray-200 rounded-full h-6 mb-4 border-2 border-gray-400 relative overflow-hidden">
+                <div id="bossHPBar" class="bg-purple-600 h-full transition-all duration-500" style="width: 100%"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white shadow-sm">안개마왕 HP</span>
+            </div>
+            <div id="bossAvatar" class="text-8xl animate-float filter drop-shadow-xl transition-transform cursor-pointer select-none">${block.boss.image}</div>
+            <h2 class="text-xl font-bold text-gray-700 mt-2">${block.boss.name}</h2>
+            <div id="damageContainer" class="absolute inset-0 pointer-events-none"></div>
+        `;
+        container.appendChild(bossUI);
+
+        const gameArea = document.createElement('div');
+        gameArea.className = "w-full flex-1 flex flex-col items-center justify-start mt-4";
+        gameArea.innerHTML = `
+            <div class="w-full h-3 bg-gray-200 rounded-full mb-6 overflow-hidden">
+                <div id="turnTimer" class="h-full bg-red-500 transition-all duration-100 ease-linear" style="width: 100%"></div>
+            </div>
+            <div id="bossQText" class="text-2xl font-black text-center text-gray-800 break-keep mb-8 min-h-[4rem] flex items-center justify-center animate-pop"></div>
+            <div id="bossOptions" class="grid grid-cols-1 gap-3 w-full"></div>
+        `;
+        container.appendChild(gameArea);
+
+        function loadQ() {
+            if (currentQIdx >= block.questions.length) { win(); return; }
+            const q = block.questions[currentQIdx];
+            document.getElementById('bossQText').innerText = q.q;
+            
+            hintBtn.disabled = false; hintBtn.classList.remove('opacity-50');
+            
+            const grid = document.getElementById('bossOptions');
+            grid.innerHTML = '';
+            
+            const opts = [...q.options].sort(()=>Math.random()-0.5);
+            opts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-3d w-full py-4 bg-white border-b-4 border-gray-300 rounded-xl text-xl font-bold text-gray-700 active:border-b-0 active:translate-y-1 active:bg-gray-100 transition-all shadow-sm";
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt, q);
+                grid.appendChild(btn);
+            });
+
+            timeLeft = block.boss.time_per_turn;
+            if(bossInterval) clearInterval(bossInterval);
+            bossInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                document.getElementById('turnTimer').style.width = `${(timeLeft/block.boss.time_per_turn)*100}%`;
+                if(timeLeft <= 0) {
+                    clearInterval(bossInterval);
+                    playerHit("시간 초과!");
+                }
+            }, 100);
+        }
+
+        function handleAnswer(sel, q) {
+            clearInterval(bossInterval);
+            let isCorrect = false;
+            if (q.type === 'ox') {
+                if (q.a === 'false' && sel.includes('아니야')) isCorrect = true;
+                if (q.a === 'true' && sel.includes('맞아')) isCorrect = true;
+            } else {
+                isCorrect = sel === q.a;
+            }
+
+            if(isCorrect) bossHit();
+            else playerHit("틀렸어요!");
+        }
+
+        function bossHit() {
+            Sound.play('hit'); 
+            currentHP -= damagePerHit;
+            if(currentHP < 0) currentHP = 0;
+            document.getElementById('bossHPBar').style.width = `${(currentHP/block.boss.max_hp)*100}%`;
+            
+            const avatar = document.getElementById('bossAvatar');
+            avatar.classList.add('animate-shake', 'text-red-500');
+            avatar.innerText = "😖";
+
+            const dmgText = document.createElement('div');
+            dmgText.className = "damage-text";
+            dmgText.innerText = `-${Math.floor(damagePerHit)}`;
+            document.getElementById('damageContainer').appendChild(dmgText);
+            setTimeout(() => dmgText.remove(), 800);
+            
+            setTimeout(() => {
+                avatar.classList.remove('animate-shake', 'text-red-500');
+                avatar.innerText = block.boss.image;
+                currentQIdx++;
+                loadQ();
+            }, 600);
+        }
+
+        function playerHit(msg) {
+            Sound.play('wrong'); 
+            gameData.hearts--;
+            updateTopBar();
+            const view = document.getElementById('gameView');
+            view.classList.add('animate-shake', 'bg-red-50');
+            setTimeout(() => view.classList.remove('animate-shake', 'bg-red-50'), 400);
+
+            if(gameData.hearts <= 0) {
+                alert("탐험 실패! 하트가 부족해요.");
+                exitGame();
+            } else {
+                currentQIdx++;
+                loadQ();
+            }
+        }
+
+        function win() {
+            if(currentHP <= 10) {
+                finishLesson(true);
+            } else {
+                alert("마왕이 도망쳤어요! (정답을 더 많이 맞춰야 해요)");
+                exitGame();
+            }
+        }
+
+        loadQ();
+    }
+
+    /**
+     * LOGIC UTILS
+     */
+    function enableMainBtn(txt, cb) {
+        const btn = document.getElementById('mainActionBtn');
+        btn.innerText = txt;
+        btn.className = "btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-green-500 hover:bg-green-600 shadow-[0_4px_0_#15803d]";
+        btn.onclick = cb;
+        btn.style.pointerEvents = "auto";
+    }
+
+    function disableMainBtn() {
+        const btn = document.getElementById('mainActionBtn');
+        btn.className = "btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-gray-300 pointer-events-none";
+        btn.onclick = null;
+    }
+
+    function checkAnswer(userAnswer, correctAnswer, block) {
+        const isCorrect = userAnswer === correctAnswer;
+        processResult(isCorrect, block);
+    }
+
+    function checkSentence(seq, block) {
+        const isCorrect = JSON.stringify(seq) === JSON.stringify(block.interaction.correct_sequence);
+        processResult(isCorrect, block);
+    }
+
+    function processResult(isCorrect, block) {
+        const fbSec = document.getElementById('feedbackSection');
+        const fbTitle = document.getElementById('feedbackTitle');
+        const fbText = document.getElementById('feedbackText');
+        const fbIcon = document.getElementById('feedbackIcon');
+        const btn = document.getElementById('mainActionBtn');
+        const actionArea = document.getElementById('actionArea'); // Bugfix: Re-select area
+
+        actionArea.classList.remove('hidden'); // Ensure visible
+        fbSec.classList.remove('hidden');
+        
+        if (isCorrect) {
+            Sound.play('correct'); 
+            fbSec.className = "mb-4 p-4 rounded-xl flex items-start space-x-3 animate-pop bg-green-100 text-green-800 border border-green-200 sparkle-effect relative";
+            fbIcon.innerText = "✅";
+            fbTitle.innerText = "정답! 🎉";
+            fbText.innerText = block.feedback.correct;
+            
+            btn.innerText = "계속하기";
+            btn.className = "btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-green-500 hover:bg-green-600 shadow-[0_4px_0_#15803d]"; // Re-apply green style
+            btn.onclick = nextBlock;
+        } else {
+            Sound.play('wrong'); 
+            gameData.hearts--;
+            updateTopBar();
+            if(gameData.hearts <= 0) { alert("하트 부족! 탐험 종료."); exitGame(); return; }
+
+            fbSec.className = "mb-4 p-4 rounded-xl flex items-start space-x-3 animate-shake bg-red-100 text-red-800 border border-red-200";
+            fbIcon.innerText = "❌";
+            fbTitle.innerText = "아쉬워요!";
+            fbText.innerText = block.feedback.incorrect;
+
+            btn.innerText = "계속하기";
+            btn.className = "btn-3d w-full py-4 rounded-2xl text-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-[0_4px_0_#991b1b]";
+            btn.onclick = nextBlock;
+        }
     }
 
     function nextBlock() {
         currentBlockIndex++;
-        if(currentBlockIndex < currentLesson.blocks.length) renderCurrentBlock();
-        else finishLesson();
+        if (currentBlockIndex < currentLesson.blocks.length) {
+            renderCurrentBlock();
+        } else {
+            finishLesson();
+        }
     }
 
-    function finishLesson(isTA=false) {
-        if(!gameData.completedLessons.includes(currentLesson.lesson_id)) {
-            gameData.completedLessons.push(currentLesson.lesson_id);
-            gameData.xp += (isTA ? 50 : 20); // More XP for Time Attack
+    function finishLesson(isBoss = false) {
+        Sound.play('correct');
+        if (!gameData.completedLessons.includes(currentLesson.id)) {
+            gameData.completedLessons.push(currentLesson.id);
+            gameData.xp += (isBoss ? 50 : 20);
+            saveGame();
         }
-        saveGame();
-        document.getElementById('modalTitle').innerText = isTA ? "타임어택 성공!" : "레슨 완료!";
-        document.getElementById('modalXP').innerText = isTA ? "+50" : "+20";
+        
+        document.getElementById('modalTitle').innerText = isBoss ? "마왕 퇴치 성공!" : "레슨 완료!";
+        document.getElementById('modalXP').innerText = isBoss ? "+50" : "+20";
         document.getElementById('completeModal').classList.remove('hidden');
     }
 
@@ -973,14 +1019,6 @@
         exitGame();
     }
 
-    // Fix: Pass levelObj to startLesson for retry logic
-    const oldStartLesson = startLesson;
-    startLesson = function(level, lesson, lIdx) {
-        lesson.levelObj = level; // Inject level ref
-        oldStartLesson(level, lesson, lIdx);
-    }
-
-    initGame();
 </script>
 </body>
 </html>
